@@ -118,6 +118,25 @@ class ImagePreprocessingService
         }
     }
 
+    /**
+     * Returns a reduced PNG (longest side ≤ $maxSide) of either the uploaded original
+     * ($format = jpeg|png|webp, flattened on white, upright) or a prepared bitmap ($format = pbm).
+     */
+    public function previewPng(string $file, string $format, int $maxSide = 1024): string
+    {
+        $args = [$format.':'.$file.'[0]'];
+        if ($format !== 'pbm') {
+            array_push($args, '-auto-orient', '-background', 'white', '-alpha', 'remove', '-alpha', 'off');
+        }
+        array_push($args, '-resize', $maxSide.'x'.$maxSide.'>', '-strip', 'png:-');
+        $png = $this->magick($args);
+        if (strncmp($png, "\x89PNG", 4) !== 0) {
+            throw PicToSvgException::conversionFailed();
+        }
+
+        return $png;
+    }
+
     /** @param list<string> $args */
     private function magick(array $args): string
     {

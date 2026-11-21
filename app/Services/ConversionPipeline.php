@@ -33,42 +33,10 @@ class ConversionPipeline
         if ($requireExisting && $this->store->readJson($dir, 'latest.json') === null) {
             throw PicToSvgException::conversionFailed('Convert the image first.', 409);
         }
-        $original = $dir.'/original.bin';
         $warnings = [];
 
         // --- 1. Prepared bitmap (cached per image-preparation settings) -----------------
-        $analysis = $this->store->readJson($dir, 'analysis.json');
-        if ($analysis === null) {
-            $analysis = $this->preprocess->analyseTransparency($original, $meta['format']);
-            $this->store->writeJson($dir, 'analysis.json', $analysis);
-        }
-        $size = $s->workingSize($meta['width'], $meta['height']);
-        $long = max($size['width'], $size['height']);
-        $params = [
-            'width' => $size['width'],
-            'height' => $size['height'],
-            'contrast' => $s->contrast,
-            'blur' => $s->blur($size['scale']),
-            'invert' => $s->invert,
-            'threshold' => $s->threshold,
-            'use_alpha_shape' => $analysis['use_alpha_shape'],
-        ];
-        $bitmap = $dir.'/bitmap-'.$s->bitmapKey($params).'.pbm';
-        if (! is_file($bitmap)) {
-            // Only remove bitmaps no concurrent request can still be tracing.
-            foreach (glob($dir.'/bitmap-*.pbm') ?: [] as $old) {
-                if (time() - (int) @filemtime($old) > 120) {
-                    @unlink($old);
-                }
-            }
-            $tmp = $dir.'/tmp-'.bin2hex(random_bytes(6)).'.pbm';
-            try {
-                $this->preprocess->prepareBitmap($original, $meta['format'], $tmp, $params);
-                rename($tmp, $bitmap);
-            } finally {
-                @unlink($tmp);
-            }
-        }
+        ['bitmap' => $bitmap, 'size' => $size, 'long' => $long, 'analysis' => $analysis] = $this->prepareBitmap($dir, $meta, $s);
         if ($analysis['use_alpha_shape']) {
             $warnings[] = 'This picture is light artwork on a transparent background, so its visible shape was traced.';
         }
@@ -160,6 +128,49 @@ class ConversionPipeline
             'warnings' => $warnings,
             'engine' => VectorTracingService::ENGINE,
         ];
+    }
+
+    /**
+     * Returns the prepared 1-bit bitmap for these settings, creating it if it is not cached.
+     *
+     * @return array{bitmap: string, size: array{width: int, height: int, scale: float}, long: int, analysis: array{opaque: bool, use_alpha_shape: bool}}
+     */
+    public function prepareBitmap(string $dir, array $meta, ConversionSettings $s): array
+    {
+        $original = $dir.'/original.bin';
+        $analysis = $this->store->readJson($dir, 'analysis.json');
+        if ($analysis === null) {
+            $analysis = $this->preprocess->analyseTransparency($original, $meta['format']);
+            $this->store->writeJson($dir, 'analysis.json', $analysis);
+        }
+        $size = $s->workingSize($meta['width'], $meta['height']);
+        $params = [
+            'width' => $size['width'],
+            'height' => $size['height'],
+            'contrast' => $s->contrast,
+            'blur' => $s->blur($size['scale']),
+            'invert' => $s->invert,
+            'threshold' => $s->threshold,
+            'use_alpha_shape' => $analysis['use_alpha_shape'],
+        ];
+        $bitmap = $dir.'/bitmap-'.$s->bitmapKey($params).'.pbm';
+        if (! is_file($bitmap)) {
+            // Only remove bitmaps no concurrent request can still be tracing.
+            foreach (glob($dir.'/bitmap-*.pbm') ?: [] as $old) {
+                if (time() - (int) @filemtime($old) > 120) {
+                    @unlink($old);
+                }
+            }
+            $tmp = $dir.'/tmp-'.bin2hex(random_bytes(6)).'.pbm';
+            try {
+                $this->preprocess->prepareBitmap($original, $meta['format'], $tmp, $params);
+                rename($tmp, $bitmap);
+            } finally {
+                @unlink($tmp);
+            }
+        }
+
+        return ['bitmap' => $bitmap, 'size' => $size, 'long' => max($size['width'], $size['height']), 'analysis' => $analysis];
     }
 
     private function pruneVersions(string $dir, string $keep): void

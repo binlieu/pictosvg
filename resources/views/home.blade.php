@@ -182,14 +182,18 @@
         </div>
 
         <div class="ai-row mt-3">
-            <button type="button" class="btn btn-outline-secondary" id="btn-ai" @disabled(empty($cfg['aiConfigured']))>AI Redraw</button>
+            <button type="button" class="btn btn-outline-secondary" id="btn-ai" @disabled(empty($cfg['aiConfigured']))>
+                <span class="spinner-border spinner-border-sm me-1 d-none" id="ai-spinner" aria-hidden="true"></span><span id="ai-label">AI Suggest Settings</span>
+            </button>
             <span class="small text-secondary" id="ai-note">
                 @if (empty($cfg['aiConfigured']))
-                    AI Redraw is not configured on this server. Standard conversion works without it.
+                    AI Suggest is not set up on this server. Standard conversion works without it.
                 @else
-                    Optional. AI may reinterpret or omit details; you can always convert the original instead.
+                    Optional. Sends a reduced copy of your picture to Anthropic's Claude, which picks the settings for you. You can change them afterwards.
                 @endif
             </span>
+        </div>
+        <div class="alert alert-info d-none mt-2 mb-0 py-2 small" id="ai-result" role="status">
         </div>
     </section>
 

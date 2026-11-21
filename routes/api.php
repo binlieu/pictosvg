@@ -12,4 +12,5 @@ Route::post('/svg/convert', [SvgConversionController::class, 'convert'])->middle
 Route::post('/svg/optimize', [SvgConversionController::class, 'optimize'])->middleware('throttle:pictosvg-convert');
 Route::get('/svg/download/{temporaryId}', SvgDownloadController::class)->middleware('throttle:pictosvg-convert');
 Route::get('/ai/status', [AiRedrawController::class, 'status']);
+Route::post('/ai/suggest', [AiRedrawController::class, 'suggest'])->middleware('throttle:pictosvg-ai');
 Route::post('/ai/redraw', [AiRedrawController::class, 'redraw'])->middleware('throttle:pictosvg-upload');

@@ -106,10 +106,41 @@ attributes are rewritten (the geometry and `viewBox` are never re-traced or defo
 ## GET /api/ai/status
 
 ```json
-{ "configured": false, "message": "AI Redraw is not configured on this server. Standard conversion works without it." }
+{
+  "configured": false,
+  "message": "AI Redraw is not configured on this server. Standard conversion works without it.",
+  "suggest_configured": false
+}
 ```
+
+`configured` refers to image redraw (not implemented, always `false`). `suggest_configured` is
+`true` when `ANTHROPIC_API_KEY` is set on the server.
+
+## POST /api/ai/suggest
+
+Optional "AI Suggest Settings". Same JSON body as `/api/svg/convert` (the settings currently in
+the UI). The server sends two reduced PNGs (longest side ≤ 1024 px) to the Anthropic API — the
+uploaded picture and the black-and-white bitmap the current settings produce — and Claude returns
+values for the normal controls. The vectors are still produced by `/api/svg/convert`.
+
+`200` response:
+
+```json
+{
+  "settings": {
+    "preset": "engrave", "detail": 6, "smoothing": 8, "noise": 7,
+    "invert": false, "threshold": null, "contrast": 0, "outline_only": false
+  },
+  "explanation": "Short plain-language reason."
+}
+```
+
+Every value is type-checked and clamped server-side. Errors use code `ai_unavailable`:
+`503` when no key is configured, the key is rejected, or the AI service is unreachable or busy;
+`422` if the model declines the picture; `502` if it returns nothing usable. Limited to 6
+requests per minute per IP because each call is billed to the server's key.
 
 ## POST /api/ai/redraw
 
-Body `{id, token}`. Returns `503` with code `ai_unavailable` when no provider is configured.
-No provider adapter ships in the MVP, so this endpoint currently always returns `503`.
+Body `{id, token}`. Image redraw is not implemented: this endpoint always returns `503` with
+code `ai_unavailable`.

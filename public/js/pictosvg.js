@@ -220,6 +220,7 @@
         show($('empty-original'), true);
         $('upload-thumb').removeAttribute('src');
         show($('upload-info'), false);
+        show($('ai-result'), false);
         show($('upload-progress'), false);
         show($('dropzone'), true);
         $('file-input').value = '';
@@ -439,7 +440,7 @@
     // ---- Buttons ---------------------------------------------------------
     function updateButtons() {
         $('btn-convert').disabled = !st.upload || st.converting || st.uploading;
-        $('btn-ai').disabled = !AI_ON || !st.upload;
+        $('btn-ai').disabled = !AI_ON || !st.upload || !!st.aiBusy;
     }
 
     // ---- Zoom / pan ------------------------------------------------------
@@ -525,19 +526,59 @@
         });
     }
 
-    // ---- AI Redraw (optional, never blocks conversion) -------------------
-    function aiRedraw() {
-        if (!AI_ON || !st.upload) return;
+    // ---- AI Suggest Settings (optional, never blocks conversion) ---------
+    // The AI only picks values for the normal controls; the vectors still come
+    // from the standard conversion.
+    function applySettings(sv) {
+        var p = document.getElementById('preset-' + sv.preset);
+        if (p) p.checked = true;
+        $('set-detail').value = sv.detail;
+        $('set-smoothing').value = sv.smoothing;
+        $('set-noise').value = sv.noise;
+        $('adv-invert').checked = !!sv.invert;
+        $('adv-contrast').value = sv.contrast;
+        var auto = $('adv-threshold-auto');
+        auto.checked = sv.threshold === null;
+        if (sv.threshold !== null) $('adv-threshold').value = sv.threshold;
+        syncAuto(auto);
+        $('adv-outline-only').checked = !!sv.outline_only;
+        refreshOutputs();
+    }
+    function setAiBusy(on) {
+        st.aiBusy = on;
+        show($('ai-spinner'), on);
+        setText('ai-label', on ? 'Asking AI…' : 'AI Suggest Settings');
+        updateButtons();
+    }
+    function aiSuggest() {
+        if (!AI_ON || !st.upload || st.aiBusy) return;
+        var uploadId = st.upload.id;
         show($('convert-error'), false);
-        fetch('/api/ai/redraw', {
+        show($('ai-result'), false);
+        setAiBusy(true);
+        fetch('/api/ai/suggest', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ id: st.upload.id, token: st.upload.token })
+            body: JSON.stringify(Object.assign({ id: st.upload.id, token: st.upload.token }, readSettings()))
         }).then(function (res) {
             return res.json().catch(function () { return null; }).then(function (b) {
-                if (!res.ok) showError('convert-error', messageFor(res.status, b));
+                return { ok: res.ok, status: res.status, body: b };
             });
+        }).then(function (r) {
+            setAiBusy(false);
+            if (!st.upload || st.upload.id !== uploadId) return; // image changed meanwhile
+            if (!r.ok || !r.body || !r.body.settings) {
+                if (isGone(r.status, r.body)) { resetImage(true); showError('upload-error', messageFor(r.status, r.body)); return; }
+                showError('convert-error', messageFor(r.status, r.body));
+                return;
+            }
+            applySettings(r.body.settings);
+            var note = $('ai-result');
+            note.textContent = 'AI suggestion applied' + (r.body.explanation ? ': ' + r.body.explanation : '.');
+            show(note, true);
+            convert(true);
         }).catch(function () {
+            setAiBusy(false);
             showError('convert-error', 'Network problem — could not reach the server.');
         });
     }
@@ -598,7 +639,7 @@
         $('adv-outline-only').checked = DEF.preset === 'outline';
         $('btn-reset').addEventListener('click', function () { resetSettings(); scheduleConvert(); });
         $('btn-convert').addEventListener('click', function () { convert(true); });
-        $('btn-ai').addEventListener('click', aiRedraw);
+        $('btn-ai').addEventListener('click', aiSuggest);
 
         // Output size (never re-traces)
         $('width-input').value = String(st.lastWidth);

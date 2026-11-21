@@ -22,7 +22,7 @@ Date: 2026-11-21. Read this with [14-current-status.md](14-current-status.md) an
 
 ## Current baseline
 
-- 54 tests (`php artisan test`), 19 unit and 35 feature, reported passing for this milestone.
+- 61 tests (`php artisan test`), 19 unit and 42 feature, reported passing for this milestone.
 - Potrace 1.16 and ImageMagick 7 (`magick`) are installed on the development machine.
 - The working tree was changed during this milestone (see KI-16). Re-read `SvgExportService` and
   `ConversionSettings` before relying on the numbers in the docs.

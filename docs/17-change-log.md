@@ -44,3 +44,12 @@ Known issues of note: see [16-known-issues.md](16-known-issues.md), especially K
 - Download response and page send `Referrer-Policy: no-referrer`; `.env.example` ships `APP_DEBUG=false`.
 - Tests: 54 passing (19 unit, 35 feature).
 - Public repository created: https://github.com/binlieu/pictosvg
+
+## 2026-11-21 — AI Suggest Settings (AI-002) and license
+
+- Optional **AI Suggest Settings**: `POST /api/ai/suggest`, `AiSuggestService`, `ClaudeSettingsAdvisor`
+  (official `anthropic-ai/sdk` ^1.12, model `claude-opus-5-5` by default). Enabled only with `ANTHROPIC_API_KEY`.
+- The disabled "AI Redraw" button was replaced by this button. Image redraw remains not implemented.
+- `ConversionPipeline::prepareBitmap()` extracted so the AI is shown the exact bitmap that is traced.
+- Tests: 61 passing (19 unit, 42 feature). The live Anthropic API has not been called.
+- Repository licensed under Apache-2.0.

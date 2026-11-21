@@ -134,7 +134,7 @@ class DownloadAndLifecycleTest extends TestCase
     public function test_home_page_renders_the_three_steps_without_ai(): void
     {
         $html = $this->get('/')->assertOk()->getContent();
-        foreach (['PicToSVG', 'Upload Image', 'Convert to SVG', 'Download SVG', 'Engrave', 'Outline Cut', 'Line Art', 'Optimize Smooth Curves', 'Advanced Settings', 'AI Redraw is not configured'] as $text) {
+        foreach (['PicToSVG', 'Upload Image', 'Convert to SVG', 'Download SVG', 'Engrave', 'Outline Cut', 'Line Art', 'Optimize Smooth Curves', 'Advanced Settings', 'AI Suggest is not set up'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
         $this->assertStringNotContainsString('secret', $html);

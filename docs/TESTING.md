@@ -3,7 +3,7 @@
 ## 1. Running the tests
 
 ```bash
-php artisan test                       # all 54 tests (Unit + Feature)
+php artisan test                       # all 61 tests (Unit + Feature)
 php artisan test --testsuite=Unit      # 19 unit tests
 php artisan test --testsuite=Feature   # 35 feature tests
 php artisan test --filter=test_logo_converts
@@ -17,7 +17,7 @@ tools. The tests do not mock the tracer.
 directory under the system temporary directory. It removes that directory afterwards and disables
 the throttle middleware.
 
-The result reported for this milestone: **54 tests passing**, reported by the developer on
+The result reported for this milestone: **61 tests passing**, reported by the developer on
 2026-11-21 (macOS, PHP 8.3.23, Laravel 13.43.0). Re-run the suite to confirm on your machine.
 
 `scripts/test-summary.sh` runs `php artisan test` and parses the final line of output as JSON. The

@@ -93,7 +93,8 @@ Production checklist:
 | `PICTOSVG_MAX_PIXELS` | `40000000` | Decoded pixel limit (width × height) |
 | `PICTOSVG_TTL_MINUTES` | `60` | How long uploads and results are kept |
 | `PICTOSVG_PROCESS_TIMEOUT` | `40` | Seconds allowed per external tool run |
-| `PICTOSVG_AI_PROVIDER`, `PICTOSVG_AI_API_KEY` | empty | Reserved for optional AI Redraw (see below) |
+| `ANTHROPIC_API_KEY` | empty | Enables the optional **AI Suggest Settings** button (see below) |
+| `PICTOSVG_AI_MODEL` | `claude-opus-5-5` | Claude model used for suggestions |
 
 ## Using it
 
@@ -135,10 +136,26 @@ authorization, expiry/cleanup and rejection of invalid or malicious uploads.
 PicToSVG creates vector files; it does not generate G-code and cannot guarantee a design is
 safe to cut. Always check the file in your laser/CNC software first.
 
+## Optional: AI Suggest Settings
+
+With an Anthropic API key in `.env` (`ANTHROPIC_API_KEY=...`), an **AI Suggest Settings** button
+appears next to Convert. One click sends a reduced copy of the picture, plus the black-and-white
+version the current settings produce, to Claude. Claude picks the preset, detail, smoothing,
+noise removal, invert, threshold and contrast; the app applies them and converts. You can still
+change every setting afterwards.
+
+- The AI only chooses settings. The vectors always come from the normal local tracing.
+- It is never required: without a key the button is disabled and everything else works.
+- Each click is a paid API call on your key and sends the picture to Anthropic, so it only
+  happens when the button is pressed (limited to 6 per minute per visitor).
+- The key stays on the server. Get one at <https://console.anthropic.com/>.
+- Status: covered by automated tests with a stand-in for the API; **not yet run against the
+  live Anthropic API**, so suggestion quality is unmeasured.
+
 ## Not implemented (yet)
 
-- **AI Redraw** — only the switch exists; no AI provider is integrated, so the button stays
-  disabled. Normal conversion never depends on it.
+- **AI Redraw** (an AI redrawing a photo as clean line art before tracing) — Claude reads
+  images but does not generate them, so this would need a separate image-generation provider.
 - True centerline (single-stroke) tracing, colour tracing, VTracer, intersection warnings for
   cut paths, background queues.
 

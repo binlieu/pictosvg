@@ -36,7 +36,14 @@ return [
     // Optional AI redraw. No provider adapter ships in the MVP; both values must be set
     // AND a provider adapter must exist for the feature to report as configured.
     'ai' => [
+        // Reserved for a future image-redraw provider (not implemented).
         'provider' => env('PICTOSVG_AI_PROVIDER'),
         'api_key' => env('PICTOSVG_AI_API_KEY'),
+
+        // "AI Suggest Settings": Claude looks at the picture and picks the conversion settings.
+        // Enabled only when a key is set. The key never leaves the server.
+        'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('PICTOSVG_AI_MODEL', 'claude-opus-5-5'),
+        'timeout' => (int) env('PICTOSVG_AI_TIMEOUT', 90),
     ],
 ];

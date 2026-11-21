@@ -10,7 +10,7 @@ Only the levels below are used. A level is claimed only when the evidence named 
 | Level | Meaning | Evidence in this milestone |
 |---|---|---|
 | Implemented | The code exists and runs. | Yes, for all features. |
-| Automated Tested | Unit or feature tests exercise the behaviour. Tests use real conversions, not mocks of the tracer. | 54 tests pass (`php artisan test`, as reported for this milestone). |
+| Automated Tested | Unit or feature tests exercise the behaviour. Tests use real conversions, not mocks of the tracer. | 61 tests pass (`php artisan test`, as reported for this milestone). |
 | Visual Reviewed | Output was rendered and inspected. This is a developer-agent review, not a human review. | Fixture outputs only. |
 | Importer Verified | Output was opened in LightBurn, Vectric Aspire / VCarve or Inkscape. | **Not Verified.** None of these applications is installed. |
 | Machine Verified | Output was cut or engraved on a machine. | **Not Verified.** |

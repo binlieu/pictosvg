@@ -161,3 +161,9 @@ Re-conversion is debounced by about 450 ms; a long continuous drag from one IP c
 When the raw trace exceeds 3 MB the conversion stops with a "too complex" message
 (`ConversionTest::test_overly_complex_traces_are_refused_before_they_exhaust_memory`). Raising
 Noise Removal or lowering Detail usually gets a result.
+
+### KI-A1: AI Suggest Settings is untested against the live API
+
+No Anthropic API key was available during development. The request shape was checked against a
+local stand-in server and the feature is covered by tests with a fake advisor, but real
+suggestion quality, latency and cost are unmeasured. See `docs/features/AI-002-suggest-settings.md`.
