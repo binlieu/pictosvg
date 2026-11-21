@@ -29,14 +29,18 @@ class ConversionPipeline
     /** @return array<string, mixed> the /api/svg/convert response body */
     public function convert(string $id, string $dir, ConversionSettings $s, bool $requireExisting = false): array
     {
-        $meta = $this->store->readJson($dir, 'meta.json') ?? throw PicToSvgException::expired();
+        $this->store->readJson($dir, 'meta.json') ?? throw PicToSvgException::expired();
+        $source = $this->source($dir, $s);
         if ($requireExisting && $this->store->readJson($dir, 'latest.json') === null) {
             throw PicToSvgException::conversionFailed('Convert the image first.', 409);
         }
         $warnings = [];
 
         // --- 1. Prepared bitmap (cached per image-preparation settings) -----------------
-        ['bitmap' => $bitmap, 'size' => $size, 'long' => $long, 'analysis' => $analysis] = $this->prepareBitmap($dir, $meta, $s);
+        ['bitmap' => $bitmap, 'size' => $size, 'long' => $long, 'analysis' => $analysis] = $this->prepareBitmap($dir, $source, $s);
+        if ($s->source === 'redraw') {
+            $warnings[] = 'This result was traced from the AI-redrawn picture. AI may reinterpret, omit or alter details — compare it with your original.';
+        }
         if ($analysis['use_alpha_shape']) {
             $warnings[] = 'This picture is light artwork on a transparent background, so its visible shape was traced.';
         }
@@ -105,7 +109,7 @@ class ConversionPipeline
             $warnings[] = 'This result has a very large number of shapes. Photos convert only approximately — try raising Noise Removal or lowering Detail.';
         }
 
-        $version = $s->versionKey($id);
+        $version = $s->versionKey($id.$source['tag']);
         $this->store->writeAtomic($dir.'/result-'.$version.'.svg', $svg);
         $this->store->writeJson($dir, 'latest.json', ['version' => $version]);
         $this->pruneVersions($dir, $version);
@@ -131,17 +135,43 @@ class ConversionPipeline
     }
 
     /**
+     * The raster that will be traced: the untouched upload, or the AI-redrawn copy stored
+     * beside it. The upload is never replaced.
+     *
+     * @return array{file: string, format: string, width: int, height: int, tag: string}
+     */
+    public function source(string $dir, ConversionSettings $s): array
+    {
+        if ($s->source === 'redraw') {
+            $redraw = $this->store->readJson($dir, 'redraw.json');
+            if ($redraw === null || ! is_file($dir.'/redraw.png')) {
+                throw PicToSvgException::conversionFailed('Redraw the picture with AI first, or trace the original.', 409);
+            }
+
+            return ['file' => $dir.'/redraw.png', 'format' => 'png', 'width' => (int) $redraw['width'], 'height' => (int) $redraw['height'], 'tag' => 'redraw-'.$redraw['version']];
+        }
+        $meta = $this->store->readJson($dir, 'meta.json') ?? throw PicToSvgException::expired();
+
+        return ['file' => $dir.'/original.bin', 'format' => $meta['format'], 'width' => (int) $meta['width'], 'height' => (int) $meta['height'], 'tag' => 'original'];
+    }
+
+    /**
      * Returns the prepared 1-bit bitmap for these settings, creating it if it is not cached.
      *
+     * @param  array{file: string, format: string, width: int, height: int, tag: string}  $meta  from source()
      * @return array{bitmap: string, size: array{width: int, height: int, scale: float}, long: int, analysis: array{opaque: bool, use_alpha_shape: bool}}
      */
     public function prepareBitmap(string $dir, array $meta, ConversionSettings $s): array
     {
-        $original = $dir.'/original.bin';
-        $analysis = $this->store->readJson($dir, 'analysis.json');
-        if ($analysis === null) {
-            $analysis = $this->preprocess->analyseTransparency($original, $meta['format']);
-            $this->store->writeJson($dir, 'analysis.json', $analysis);
+        $original = $meta['file'];
+        if ($meta['tag'] !== 'original') {
+            $analysis = ['opaque' => true, 'use_alpha_shape' => false]; // redraws are stored opaque
+        } else {
+            $analysis = $this->store->readJson($dir, 'analysis.json');
+            if ($analysis === null) {
+                $analysis = $this->preprocess->analyseTransparency($original, $meta['format']);
+                $this->store->writeJson($dir, 'analysis.json', $analysis);
+            }
         }
         $size = $s->workingSize($meta['width'], $meta['height']);
         $params = [
@@ -153,7 +183,7 @@ class ConversionPipeline
             'threshold' => $s->threshold,
             'use_alpha_shape' => $analysis['use_alpha_shape'],
         ];
-        $bitmap = $dir.'/bitmap-'.$s->bitmapKey($params).'.pbm';
+        $bitmap = $dir.'/bitmap-'.$s->bitmapKey($params + ['source' => $meta['tag']]).'.pbm';
         if (! is_file($bitmap)) {
             // Only remove bitmaps no concurrent request can still be tracing.
             foreach (glob($dir.'/bitmap-*.pbm') ?: [] as $old) {

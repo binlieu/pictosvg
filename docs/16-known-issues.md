@@ -78,7 +78,7 @@ known to be handled correctly by cutting software. No machine has been used.
 
 ### KI-12: Documentation disagrees with the code in places
 
-- `docs/API.md` shows the `/api/ai/status` message as "AI Redraw is not configured on this server."
+- (Resolved) `docs/API.md` now quotes the `/api/ai/status` message exactly as the code returns it.
   The code returns "…Standard conversion works without it." appended. The code is the source of truth.
 - `docs/API.md` names the download parameter `{id}`. The route parameter is `temporaryId`.
 - The master specification says the AI button "may appear when configured". It is always shown,
@@ -162,8 +162,15 @@ When the raw trace exceeds 3 MB the conversion stops with a "too complex" messag
 (`ConversionTest::test_overly_complex_traces_are_refused_before_they_exhaust_memory`). Raising
 Noise Removal or lowering Detail usually gets a result.
 
-### KI-A1: AI Suggest Settings is untested against the live API
+### KI-A1: AI Redraw is untested against the live OpenAI API
 
-No Anthropic API key was available during development. The request shape was checked against a
-local stand-in server and the feature is covered by tests with a fake advisor, but real
-suggestion quality, latency and cost are unmeasured. See `docs/features/AI-002-suggest-settings.md`.
+No OpenAI API key was available during development. The feature is covered by tests with a faked
+API and was tried in a browser against a local stand-in, but the request has never been accepted
+by the real service; redraw quality, latency and cost are unmeasured. If the default model id
+(`gpt-image-2.6-sunburst`) is rejected for an account, set `PICTOSVG_AI_IMAGE_MODEL`.
+See `docs/features/AI-001-optional-redraw.md`.
+
+### KI-A2: A redraw blocks a PHP worker for up to 150 s
+
+The request is synchronous. On the single-process dev server every other request waits; behind
+Nginx the proxy/FastCGI read timeout must exceed `PICTOSVG_AI_TIMEOUT`. A queue is not implemented.

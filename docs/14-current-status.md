@@ -7,7 +7,7 @@ Date: 2026-11-21
 The MVP is implemented: upload, validate, prepare, trace with Potrace, optimise, preview, export
 a physically sized SVG, and download. No database, accounts or AI provider are used.
 
-Test status: **61 tests pass** (`php artisan test`), as reported for this milestone. The count
+Test status: **62 tests pass** (`php artisan test`), as reported for this milestone. The count
 was confirmed by a static count of the test methods. The suite was not re-run for this documentation pass.
 
 Verification:
@@ -27,7 +27,7 @@ Verification:
 | OPT-001 | Implemented (no overlap cleanup) |
 | VIEW-001 | Implemented (no browser tests) |
 | EXPORT-001 | Implemented (no importer checks) |
-| AI-001 | Gated only (no provider, no redraw) |
+| AI-001 | Implemented with OpenAI image editing; tested with a faked API only — not verified against the live API |
 | SYS-001 | Implemented (no Ubuntu test) |
 
 ## Components
@@ -49,7 +49,7 @@ Verification:
 | Centerline tracing | Not implemented |
 | Colour tracing | Not implemented |
 | Intersection detection | Not implemented |
-| AI provider adapter | Not implemented |
+| AI Redraw live verification | Not done (no OpenAI key available) |
 | `scripts/check.sh` | Present; not run for this milestone. Its docs step expects `README.md`, which is absent. |
 | Ubuntu, Nginx and PHP-FPM instructions | Written, not tested |
 

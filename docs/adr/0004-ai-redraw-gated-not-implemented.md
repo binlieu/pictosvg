@@ -1,5 +1,7 @@
 # ADR 0004: AI redraw is gated and not implemented
 
+> **Superseded on 2026-11-21 by [ADR 0005](0005-openai-image-editing-for-ai-redraw.md):** AI Redraw is now implemented with OpenAI image editing. The gating rule below (disabled without credentials, never on the standard path) still applies.
+
 Status: Accepted (2026-11-21)
 
 ## Context

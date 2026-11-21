@@ -183,17 +183,25 @@
 
         <div class="ai-row mt-3">
             <button type="button" class="btn btn-outline-secondary" id="btn-ai" @disabled(empty($cfg['aiConfigured']))>
-                <span class="spinner-border spinner-border-sm me-1 d-none" id="ai-spinner" aria-hidden="true"></span><span id="ai-label">AI Suggest Settings</span>
+                <span class="spinner-border spinner-border-sm me-1 d-none" id="ai-spinner" aria-hidden="true"></span><span id="ai-label">Redraw with AI</span>
             </button>
             <span class="small text-secondary" id="ai-note">
                 @if (empty($cfg['aiConfigured']))
-                    AI Suggest is not set up on this server. Standard conversion works without it.
+                    AI Redraw is not set up on this server. Standard conversion works without it.
                 @else
-                    Optional. Sends a reduced copy of your picture to Anthropic's Claude, which picks the settings for you. You can change them afterwards.
+                    Optional, for photos and busy pictures. Sends your picture to OpenAI, which redraws it as clean black-and-white artwork (can take a minute or two). AI may reinterpret, omit or alter details.
                 @endif
             </span>
         </div>
-        <div class="alert alert-info d-none mt-2 mb-0 py-2 small" id="ai-result" role="status">
+        <div class="d-none mt-3" id="ai-source" role="group" aria-labelledby="ai-source-label">
+            <div class="small text-secondary mb-1" id="ai-source-label">Picture to trace</div>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="trace-source" id="source-original" value="original" autocomplete="off">
+                <label class="btn btn-sm btn-outline-light" for="source-original">Original picture</label>
+                <input type="radio" class="btn-check" name="trace-source" id="source-redraw" value="redraw" autocomplete="off" checked>
+                <label class="btn btn-sm btn-outline-light" for="source-redraw">AI redrawn picture</label>
+            </div>
+            <div class="small text-secondary mt-1">Switch between them to compare. Your original is never changed.</div>
         </div>
     </section>
 

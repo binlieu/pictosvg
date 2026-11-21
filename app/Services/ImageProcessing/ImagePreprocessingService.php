@@ -137,6 +137,47 @@ class ImagePreprocessingService
         return $png;
     }
 
+    /**
+     * The picture centred on a white canvas of exactly $width × $height (nothing is cropped).
+     * Returns the PNG and the box the picture occupies, so the padding can be removed again.
+     *
+     * @return array{png: string, box: array{x: int, y: int, width: int, height: int}}
+     */
+    public function paddedPng(string $file, string $format, int $sourceWidth, int $sourceHeight, int $width, int $height): array
+    {
+        $scale = min($width / $sourceWidth, $height / $sourceHeight);
+        $w = max(1, min($width, (int) round($sourceWidth * $scale)));
+        $h = max(1, min($height, (int) round($sourceHeight * $scale)));
+        $png = $this->magick([
+            $format.':'.$file.'[0]', '-auto-orient', '-background', 'white', '-alpha', 'remove', '-alpha', 'off',
+            '-resize', $w.'x'.$h.'!', '-gravity', 'center', '-extent', $width.'x'.$height, '-strip', 'png:-',
+        ]);
+        if (strncmp($png, "\x89PNG", 4) !== 0) {
+            throw PicToSvgException::conversionFailed();
+        }
+
+        return ['png' => $png, 'box' => ['x' => intdiv($width - $w, 2), 'y' => intdiv($height - $h, 2), 'width' => $w, 'height' => $h]];
+    }
+
+    /**
+     * Re-encodes an image received from outside as a plain, opaque, metadata-free PNG,
+     * cropped to $crop (x, y, width, height). Nothing from the source file survives
+     * except its pixels.
+     *
+     * @param  array{x: int, y: int, width: int, height: int}  $crop
+     */
+    public function normaliseToPng(string $file, string $format, array $crop, string $output): void
+    {
+        $this->magick([
+            $format.':'.$file.'[0]', '-background', 'white', '-alpha', 'remove', '-alpha', 'off',
+            '-crop', $crop['width'].'x'.$crop['height'].'+'.$crop['x'].'+'.$crop['y'], '+repage',
+            '-strip', 'png:'.$output,
+        ]);
+        if (! is_file($output) || filesize($output) < 32) {
+            throw PicToSvgException::conversionFailed();
+        }
+    }
+
     /** @param list<string> $args */
     private function magick(array $args): string
     {

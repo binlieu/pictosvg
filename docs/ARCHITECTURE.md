@@ -20,7 +20,7 @@ id and a token.
 | Image processing | `app/Services/ImageProcessing/ImagePreprocessingService.php` | Content validation, transparency analysis, ImageMagick preparation. |
 | Tracing | `app/Services/Tracing/VectorTracingService.php` | Potrace adapter and SVG reader. |
 | SVG | `app/Services/Svg/` | `SvgOptimizationService`, `SvgExportService`, `SvgValidationService`, `PathGeometry`. |
-| AI (gated) | `app/Services/Ai/OptionalAiRedrawService.php` | Status and always-unavailable redraw. Not on the standard path. |
+| AI Redraw (optional) | `app/Services/Ai/OptionalAiRedrawService.php` | Sends the padded picture to OpenAI image editing on an explicit click, validates and re-encodes the answer, stores it beside the original. Not on the standard path. |
 | Process helper | `app/Support/ExternalTool.php` | Runs an external binary with an argument array, timeout and neutral working directory. |
 | Storage | `app/Support/TemporaryFiles/ConversionStore.php` | Ids, tokens, directory lifecycle, expiry and cleanup. |
 | Errors | `app/Exceptions/PicToSvgException.php` | User-facing error codes and JSON rendering. |
@@ -82,8 +82,12 @@ conversion has been stored yet. The web UI always calls `/api/svg/convert`.
 
 ### 2.4 AI status and redraw
 
-`GET /api/ai/status` reports whether AI is configured. `POST /api/ai/redraw` authorises the
-conversion, then always throws `ai_unavailable` (503). See [ADR 0004](adr/0004-ai-redraw-gated-not-implemented.md).
+`GET /api/ai/status` reports whether an OpenAI key is configured. `POST /api/ai/redraw` authorises
+the conversion, then — only when a key is set — sends the padded picture to OpenAI's image-edit
+endpoint, validates and re-encodes the answer and stores it as `redraw.png` beside `original.bin`.
+`GET /api/ai/redraw/{id}` serves it for comparison, and `/api/svg/convert` traces it when
+`source=redraw`. This is the only outbound data path in the application, and it runs only on an
+explicit click. See [ADR 0005](adr/0005-openai-image-editing-for-ai-redraw.md).
 
 ## 3. Frontend
 
@@ -175,7 +179,8 @@ Laravel `RateLimiter`, keyed by client IP, using the default cache store (`file`
 
 | Bucket | Limit | Routes |
 |---|---|---|
-| `pictosvg-upload` | 20 per minute | `POST /api/images/upload`, `POST /api/ai/redraw` |
+| `pictosvg-upload` | 20 per minute | `POST /api/images/upload` |
+| `pictosvg-ai` | 4 per minute | `POST /api/ai/redraw` (each call is billed) |
 | `pictosvg-convert` | 180 per minute | `POST /api/svg/convert`, `POST /api/svg/optimize`, `GET /api/svg/download/{temporaryId}` |
 | none | — | `GET /api/ai/status`, `GET /` |
 

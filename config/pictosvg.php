@@ -33,21 +33,16 @@ return [
         'unit' => 'mm',
     ],
 
-    // Optional AI redraw. No provider adapter ships in the MVP; both values must be set
-    // AND a provider adapter must exist for the feature to report as configured.
+    // Optional AI Redraw (OpenAI image editing): the picture is redrawn as clean black-and-white
+    // artwork, which is then traced by the normal pipeline. Enabled only when a key is set.
+    // The key never leaves the server; a picture is sent only when a user clicks the button.
     'ai' => [
-        // Reserved for a future image-redraw provider (not implemented).
-        'provider' => env('PICTOSVG_AI_PROVIDER'),
-        'api_key' => env('PICTOSVG_AI_API_KEY'),
-
-        // "AI Suggest Settings": Claude looks at the picture and picks the conversion settings.
-        // Enabled only when a key is set. The key never leaves the server.
-        'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
-        'model' => env('PICTOSVG_AI_MODEL', 'claude-opus-5-5'),
-        // Pinned explicitly so an ambient ANTHROPIC_BASE_URL in the server's environment can
-        // never redirect the key and the picture to another host.
-        'base_url' => env('PICTOSVG_AI_BASE_URL', 'https://api.anthropic.com'),
-        // Kept below typical proxy read timeouts (Nginx default 60 s); no automatic retry.
-        'timeout' => (int) env('PICTOSVG_AI_TIMEOUT', 45),
+        'openai_api_key' => env('OPENAI_API_KEY'),
+        'image_model' => env('PICTOSVG_AI_IMAGE_MODEL', 'gpt-image-2.6-sunburst'),
+        'image_quality' => env('PICTOSVG_AI_IMAGE_QUALITY', 'medium'),
+        // Pinned explicitly so an ambient OPENAI_BASE_URL can never redirect the key or the picture.
+        'base_url' => env('PICTOSVG_AI_BASE_URL', 'https://api.openai.com/v1'),
+        'timeout' => (int) env('PICTOSVG_AI_TIMEOUT', 150),
+        'max_response_bytes' => 40 * 1024 * 1024,
     ],
 ];

@@ -35,7 +35,7 @@ Status is about the code, not about physical quality. See [FEATURES.md](FEATURES
 | Image processing | ImageMagick or equivalent | Implemented (ImageMagick 7 CLI) |
 | Vector tracing | VTracer and/or Potrace | Partially: Potrace only. VTracer not integrated (ADR 0001). |
 | SVG processing | Secure parser, simplification, optimisation | Implemented (see sections 5 and 7) |
-| Optional AI | Configurable image-redraw provider | Partially: gating only (ADR 0004) |
+| Optional AI | Configurable image-redraw provider | Implemented with OpenAI image editing (ADR 0005); not verified against the live OpenAI API |
 | Deployment | Ubuntu, Nginx, PHP-FPM | Partially: instructions written, **not verified on Ubuntu** |
 | Architecture | Modular | Implemented (see [ARCHITECTURE.md](ARCHITECTURE.md)) |
 | No SPA, React, Vue or Node server | Required | Implemented |
@@ -78,7 +78,7 @@ Status is about the code, not about physical quality. See [FEATURES.md](FEATURES
 | Outline Cut | Clean closed contours for cutting | Implemented, with the caveat that both edges of a drawn line are traced |
 | Line Art | Clean black line artwork with minimal noise | Implemented. Not centerlines. |
 | Optimize Smooth Curves | Checkbox, on by default | Implemented |
-| AI Redraw | Optional button when configured; never blocks conversion; never labels thresholding as AI | Partially: the button is always present but disabled when not configured. It cannot redraw. |
+| AI Redraw | Optional button when configured; never blocks conversion; never labels thresholding as AI | Implemented: **Redraw with AI** is enabled only when a key is configured; disabled with an explanation otherwise |
 
 ### 3.4 Step 3: Preview and Download
 
@@ -202,15 +202,15 @@ Preset guidance:
 
 | Item | Requirement | Status |
 |---|---|---|
-| Modular integration layer | Required | Partially: the service class exists |
-| Provider adapter | Required when AI is used | Not implemented |
-| Redraw flow | Original → AI Redraw → trace → optimise | Not implemented |
-| Original and redrawn versions | Distinguishable and selectable | Not implemented |
-| Never overwrite the original | Required | Implemented (no redraw path writes anything) |
+| Modular integration layer | Required | Implemented (`OptionalAiRedrawService`, isolated from the conversion engine) |
+| Provider adapter | Required when AI is used | Implemented: OpenAI image editing; not verified against the live OpenAI API |
+| Redraw flow | Original → AI Redraw → trace → optimise | Implemented (tested with a faked API) |
+| Original and redrawn versions | Distinguishable and selectable | Implemented (**Picture to trace** switch; `source` parameter) |
+| Never overwrite the original | Required | Implemented (redraw stored as a separate file; covered by tests) |
 | Credentials on the server only | Required | Implemented (config only; not returned to clients) |
 | Gate when not configured | Required | Implemented (disabled button, status endpoint, 503 endpoint) |
 | Explain AI may reinterpret details | Required | Implemented (note text) |
-| Privacy, retention and cost documentation | Required | Not implemented (no provider) |
+| Privacy, retention and cost documentation | Required | Implemented (README, AI-001, ADR 0005); the redraw follows the same 60-minute expiry as the upload |
 | Standard conversion needs no AI | Required | Implemented |
 
 ## 9. Backend architecture
@@ -283,7 +283,7 @@ Preset guidance:
 |---|---|---|
 | Phase 1: working MVP | Laravel app, single page, upload, black-and-white conversion, real tracing, optimisation, side-by-side preview, download, mm and inch sizing | Implemented (Ubuntu deployment not verified) |
 | Phase 2: improved processing | Detail, Smoothing and Noise Removal sliders; additional presets; Advanced Settings; improved contour analysis; better comparison | Partially: sliders, presets and Advanced Settings are done. Contour analysis is limited to Potrace and the post-trace steps. The comparison is side by side only. |
-| Phase 3: optional AI | AI redraw, subject simplification, original-versus-redrawn comparison, tracing the AI output | Not implemented (gate only) |
+| Phase 3: optional AI | AI redraw, subject simplification, original-versus-redrawn comparison, tracing the AI output | Implemented with OpenAI image editing; not verified against the live OpenAI API |
 
 ## 13. Documentation
 

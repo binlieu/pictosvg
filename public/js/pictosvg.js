@@ -78,6 +78,7 @@
             smooth_curves: $('opt-smooth').checked,
             threshold: auto('threshold'),
             contrast: Number($('adv-contrast').value),
+            source: traceSource(),
             invert: $('adv-invert').checked,
             tolerance: auto('tolerance'),
             speck: auto('speck'),
@@ -220,7 +221,7 @@
         show($('empty-original'), true);
         $('upload-thumb').removeAttribute('src');
         show($('upload-info'), false);
-        show($('ai-result'), false);
+        clearRedraw();
         show($('upload-progress'), false);
         show($('dropzone'), true);
         $('file-input').value = '';
@@ -526,60 +527,70 @@
         });
     }
 
-    // ---- AI Suggest Settings (optional, never blocks conversion) ---------
-    // The AI only picks values for the normal controls; the vectors still come
-    // from the standard conversion.
-    function applySettings(sv) {
-        var p = document.getElementById('preset-' + sv.preset);
-        if (p) p.checked = true;
-        $('set-detail').value = sv.detail;
-        $('set-smoothing').value = sv.smoothing;
-        $('set-noise').value = sv.noise;
-        $('adv-invert').checked = !!sv.invert;
-        $('adv-contrast').value = sv.contrast;
-        var auto = $('adv-threshold-auto');
-        auto.checked = sv.threshold === null;
-        if (sv.threshold !== null) $('adv-threshold').value = sv.threshold;
-        syncAuto(auto);
-        $('adv-outline-only').checked = !!sv.outline_only;
-        refreshOutputs();
+    // ---- AI Redraw (optional, never blocks conversion) -------------------
+    // Original -> AI redraw -> normal trace. The redraw is kept beside the
+    // original; the user picks which one is traced.
+    function traceSource() {
+        var r = document.querySelector('input[name="trace-source"]:checked');
+        return st.redrawUrl && r && r.value === 'redraw' ? 'redraw' : 'original';
+    }
+    function showSourceImage() {
+        var useRedraw = traceSource() === 'redraw';
+        var img = $('img-original');
+        if (!st.localUrl) return;
+        img.src = useRedraw ? st.redrawUrl : st.localUrl;
+        img.alt = useRedraw ? 'AI redrawn picture' : 'Original uploaded image';
+        setText('h-original', useRedraw ? 'AI Redrawn Picture' : 'Original Image');
+    }
+    function clearRedraw() {
+        if (st.redrawUrl) { URL.revokeObjectURL(st.redrawUrl); st.redrawUrl = null; }
+        show($('ai-source'), false);
+        $('source-redraw').checked = true;
+        setText('h-original', 'Original Image');
     }
     function setAiBusy(on) {
         st.aiBusy = on;
         show($('ai-spinner'), on);
-        setText('ai-label', on ? 'Asking AI…' : 'AI Suggest Settings');
+        setText('ai-label', on ? 'Redrawing… this can take a minute or two' : (st.redrawUrl ? 'Redraw again with AI' : 'Redraw with AI'));
         updateButtons();
     }
-    function aiSuggest() {
+    function aiRedraw() {
         if (!AI_ON || !st.upload || st.aiBusy) return;
-        var uploadId = st.upload.id;
+        var up = st.upload;
         show($('convert-error'), false);
-        show($('ai-result'), false);
         setAiBusy(true);
-        fetch('/api/ai/suggest', {
+        fetch('/api/ai/redraw', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify(Object.assign({ id: st.upload.id, token: st.upload.token }, readSettings()))
+            body: JSON.stringify({ id: up.id, token: up.token })
         }).then(function (res) {
             return res.json().catch(function () { return null; }).then(function (b) {
                 return { ok: res.ok, status: res.status, body: b };
             });
         }).then(function (r) {
-            setAiBusy(false);
-            if (!st.upload || st.upload.id !== uploadId) return; // image changed meanwhile
-            if (!r.ok || !r.body || !r.body.settings) {
-                if (isGone(r.status, r.body)) { resetImage(true); showError('upload-error', messageFor(r.status, r.body)); return; }
-                showError('convert-error', messageFor(r.status, r.body));
-                return;
+            if (!r.ok) {
+                var err = new Error(messageFor(r.status, r.body));
+                err.gone = isGone(r.status, r.body);
+                throw err;
             }
-            applySettings(r.body.settings);
-            var note = $('ai-result');
-            note.textContent = 'AI suggestion applied' + (r.body.explanation ? ': ' + r.body.explanation : '.');
-            show(note, true);
-            convert(true);
-        }).catch(function () {
+            return fetch('/api/ai/redraw/' + encodeURIComponent(up.id) + '?' + new URLSearchParams({ token: up.token, v: r.body.version }), { headers: { 'Accept': 'image/png' } });
+        }).then(function (res) {
+            if (!res.ok) throw new Error('The redrawn picture could not be loaded. Please try again.');
+            return res.blob();
+        }).then(function (blob) {
+            if (st.upload !== up) { setAiBusy(false); return; } // image changed meanwhile
+            if (st.redrawUrl) URL.revokeObjectURL(st.redrawUrl);
+            st.redrawUrl = URL.createObjectURL(blob);
+            $('source-redraw').checked = true;
+            show($('ai-source'), true);
             setAiBusy(false);
-            showError('convert-error', 'Network problem — could not reach the server.');
+            showSourceImage();
+            convert(true);
+        }).catch(function (e) {
+            setAiBusy(false);
+            if (st.upload !== up) return;
+            if (e && e.gone) { resetImage(true); showError('upload-error', e.message); return; }
+            showError('convert-error', (e && e.message && e.name !== 'TypeError') ? e.message : 'Network problem — could not reach the server.');
         });
     }
 
@@ -639,7 +650,10 @@
         $('adv-outline-only').checked = DEF.preset === 'outline';
         $('btn-reset').addEventListener('click', function () { resetSettings(); scheduleConvert(); });
         $('btn-convert').addEventListener('click', function () { convert(true); });
-        $('btn-ai').addEventListener('click', aiSuggest);
+        $('btn-ai').addEventListener('click', aiRedraw);
+        document.querySelectorAll('input[name="trace-source"]').forEach(function (r) {
+            r.addEventListener('change', function () { showSourceImage(); convert(false); });
+        });
 
         // Output size (never re-traces)
         $('width-input').value = String(st.lastWidth);

@@ -104,7 +104,7 @@ QUEUE_CONNECTION=sync
 DB_CONNECTION=null
 ```
 
-Leave `PICTOSVG_AI_PROVIDER` and `PICTOSVG_AI_API_KEY` empty. No AI provider is implemented.
+Leave `OPENAI_API_KEY` empty unless you want the optional AI Redraw button. With a key, also raise the Nginx `fastcgi_read_timeout` above `PICTOSVG_AI_TIMEOUT` (default 150 s).
 
 Permissions. PHP-FPM must write to `storage` and `bootstrap/cache`:
 
@@ -214,7 +214,8 @@ From `.env.example` and `config/pictosvg.php`:
 | `PICTOSVG_STORAGE_PATH` | `storage/app/private/pictosvg` | Temporary storage root. |
 | `PICTOSVG_MAGICK_MEMORY` | `1GiB` | ImageMagick memory and map limit. |
 | `PICTOSVG_MAGICK_DISK` | `2GiB` | ImageMagick disk limit. |
-| `PICTOSVG_AI_PROVIDER`, `PICTOSVG_AI_API_KEY` | empty | Reserved. No provider exists. Leave empty. |
+| `OPENAI_API_KEY` | empty | Enables optional AI Redraw. Sent only to the OpenAI API, only when a user clicks the button. |
+| `PICTOSVG_AI_IMAGE_MODEL`, `PICTOSVG_AI_IMAGE_QUALITY`, `PICTOSVG_AI_TIMEOUT` | `gpt-image-2.6-sunburst`, `medium`, `150` | Redraw model, quality and timeout (seconds). |
 | `APP_KEY` | generated | Signs tokens. Changing it invalidates all conversions. |
 
 ## 5. Upgrading and rollback

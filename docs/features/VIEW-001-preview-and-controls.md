@@ -30,7 +30,7 @@ controls, all driven by `public/js/pictosvg.js`.
 - Output width (default 150) and unit (mm or in). Changing the unit converts the width value.
   Height is calculated from the aspect ratio. Changing the size only rescales the download.
 - Download link: enabled once a result and a valid width exist.
-- AI Redraw button: disabled, with the note that AI is not configured.
+- **Redraw with AI** button: disabled with a note when no key is configured. After a redraw, a **Picture to trace** switch (Original picture / AI redrawn picture) appears and the left preview panel shows the selected picture for comparison.
 
 ## Acceptance criteria
 

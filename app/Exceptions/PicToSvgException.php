@@ -58,7 +58,7 @@ class PicToSvgException extends RuntimeException
 
     public static function aiUnavailable(): self
     {
-        return new self('AI Redraw is not configured on this server. Standard conversion works without it.', 'ai_unavailable', 503);
+        return new self('AI Redraw is not set up on this server. Standard conversion works without it.', 'ai_unavailable', 503);
     }
 
     public function render(): JsonResponse

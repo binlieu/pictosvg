@@ -22,7 +22,7 @@ Date: 2026-11-21. Read this with [14-current-status.md](14-current-status.md) an
 
 ## Current baseline
 
-- 61 tests (`php artisan test`), 19 unit and 42 feature, reported passing for this milestone.
+- 62 tests (`php artisan test`), 19 unit and 43 feature, reported passing for this milestone.
 - Potrace 1.16 and ImageMagick 7 (`magick`) are installed on the development machine.
 - The working tree was changed during this milestone (see KI-16). Re-read `SvgExportService` and
   `ConversionSettings` before relying on the numbers in the docs.
@@ -51,7 +51,7 @@ Each task should start with a short spec and a failing test where the task chang
    tests using a shape with a deliberate self-intersection. Warn only; do not modify geometry.
 8. **Quality gate.** `scripts/check.sh` exists. Settle its documentation step (it expects `README.md`, which
    the task rules forbid unless asked for), then run the script and record the result, including Pint.
-9. **AI provider adapter (only after a decision).** Choose one provider, write an ADR that supersedes
+9. **Live trial of AI Redraw.** With a real `OPENAI_API_KEY`, redraw a few real photographs; record whether the request is accepted, the quality, latency and cost per click, and whether padding removal keeps the picture aligned. Update AI-001 and KI-A1 with the evidence.
    ADR 0004, document privacy and retention, and add the adapter with tests.
 
 ## Things to avoid

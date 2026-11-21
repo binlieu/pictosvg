@@ -39,15 +39,14 @@ Multi-colour or greyscale layers. Not planned for the MVP line.
 Evaluate VTracer as a second engine. Its licence, installation route and output quality must be
 checked before adoption. Requires a decision record that supersedes or extends ADR 0001.
 
-## 8. AI redraw provider adapter
+## 8. AI Redraw follow-ups
 
-Add one provider adapter behind `OptionalAiRedrawService`. Then add:
-- explicit user action before any image is sent, and a clear privacy and retention statement;
-- an original-versus-redraw comparison and a choice of which image to trace;
-- a cost control, so that paid requests cannot happen silently;
-- tests for the adapter, error handling and the gate.
+AI Redraw is implemented (ADR 0005). Still open:
 
-See [ADR 0004](adr/0004-ai-redraw-gated-not-implemented.md).
+- a live trial with real photographs, measuring quality, latency and cost;
+- running redraws on a queue so they do not hold a PHP worker;
+- a per-site spending cap in addition to the per-IP rate limit;
+- prompt variants per preset (for example bolder shapes for Outline Cut).
 
 ## 9. Queues
 

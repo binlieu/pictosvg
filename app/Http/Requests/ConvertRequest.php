@@ -16,6 +16,7 @@ class ConvertRequest extends FormRequest
         return [
             'id' => ['required', 'string', 'regex:/\A[a-f0-9]{32}\z/'],
             'token' => ['required', 'string', 'regex:/\A[a-f0-9]{64}\z/'],
+            'source' => ['sometimes', 'in:original,redraw'],
             'preset' => ['sometimes', 'in:engrave,outline,lineart'],
             'detail' => ['sometimes', 'integer', 'between:1,10'],
             'smoothing' => ['sometimes', 'integer', 'between:0,10'],

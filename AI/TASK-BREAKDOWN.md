@@ -16,7 +16,7 @@ single session without delegation, so the owners below are not evidence of who w
 | SVG export and validator | EXPORT-001 | Main session | Done | `SvgExportAndValidationTest` (6) |
 | Download, re-sizing and authorisation | EXPORT-001, SYS-001 | Main session | Done | `DownloadAndLifecycleTest` |
 | Temporary store, tokens, expiry and cleanup | SYS-001 | Main session | Done | `DownloadAndLifecycleTest` |
-| AI gating | AI-001 | Main session | Done (gate only) | `DownloadAndLifecycleTest::test_ai_redraw_is_reported_unavailable_and_never_blocks_conversion` |
+| AI Redraw (OpenAI image editing) | AI-001 | Main session | Done; not verified against the live API | `tests/Feature/AiRedrawTest.php` (9 tests) |
 | Frontend page, script and styles | VIEW-001 | Sonnet subagent (planned) | Done | `DownloadAndLifecycleTest::test_home_page_renders_the_three_steps_without_ai`. Interactive behaviour not tested. |
 | Documentation set | all | Haiku subagent (planned) | Done in one pass by the main session | Files under `docs/` and `AI/` |
 | Review of geometry, security and resource bounds | all | Sonnet subagent (planned) | Not evidenced | No review record in this milestone |
@@ -36,7 +36,7 @@ Ordered by the next safe step in [docs/15-agent-handoff.md](../docs/15-agent-han
 | 6 | Per-id lock for convert and optimise (KI-08) | SYS-001 | No | Add concurrent-request test |
 | 7 | Intersection detection for cut mode | OPT-001, TRACE-001 | No | Spec first |
 | 8 | Run `scripts/check.sh`, settle its `README.md` docs check, run Pint | all | No | Script exists; not run in this milestone |
-| 9 | AI provider adapter | AI-001 | No | Needs a decision and a new ADR |
+| 9 | Live trial of AI Redraw with a real key | AI-001 | Needs an OpenAI API key | Measure acceptance, quality, latency, cost |
 | 10 | Browser workflow tests | VIEW-001 | No | Keep to the three-step flow |
 | 11 | Centerline tracing (separate feature) | TRACE-001 | No | Do not mislabel outline tracing |
 | 12 | Documentation corrections (KI-12, KI-13, KI-14) | all | No | Low effort |

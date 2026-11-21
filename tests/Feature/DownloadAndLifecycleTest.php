@@ -115,26 +115,10 @@ class DownloadAndLifecycleTest extends TestCase
         $this->assertNotSame($upload['token'], $store->tokenFor($upload['id']));
     }
 
-    public function test_ai_redraw_is_reported_unavailable_and_never_blocks_conversion(): void
-    {
-        $this->getJson('/api/ai/status')->assertOk()->assertJsonPath('configured', false);
-        // credentials alone do not enable it: no provider adapter exists in the MVP
-        config(['pictosvg.ai.provider' => 'example', 'pictosvg.ai.api_key' => 'secret-key']);
-        $this->getJson('/api/ai/status')->assertOk()->assertJsonPath('configured', false);
-
-        $upload = $this->upload('logo.png');
-        $response = $this->postJson('/api/ai/redraw', ['id' => $upload['id'], 'token' => $upload['token']]);
-        $response->assertStatus(503)->assertJsonPath('code', 'ai_unavailable');
-        $this->assertStringNotContainsString('secret-key', $response->getContent());
-        $this->postJson('/api/ai/redraw', ['id' => $upload['id'], 'token' => 'nope'])->assertStatus(403);
-
-        $this->convert($upload); // standard conversion still works
-    }
-
     public function test_home_page_renders_the_three_steps_without_ai(): void
     {
         $html = $this->get('/')->assertOk()->getContent();
-        foreach (['PicToSVG', 'Upload Image', 'Convert to SVG', 'Download SVG', 'Engrave', 'Outline Cut', 'Line Art', 'Optimize Smooth Curves', 'Advanced Settings', 'AI Suggest is not set up'] as $text) {
+        foreach (['PicToSVG', 'Upload Image', 'Convert to SVG', 'Download SVG', 'Engrave', 'Outline Cut', 'Line Art', 'Optimize Smooth Curves', 'Advanced Settings', 'AI Redraw is not set up'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
         $this->assertStringNotContainsString('secret', $html);

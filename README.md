@@ -93,8 +93,10 @@ Production checklist:
 | `PICTOSVG_MAX_PIXELS` | `40000000` | Decoded pixel limit (width × height) |
 | `PICTOSVG_TTL_MINUTES` | `60` | How long uploads and results are kept |
 | `PICTOSVG_PROCESS_TIMEOUT` | `40` | Seconds allowed per external tool run |
-| `ANTHROPIC_API_KEY` | empty | Enables the optional **AI Suggest Settings** button (see below) |
-| `PICTOSVG_AI_MODEL` | `claude-opus-5-5` | Claude model used for suggestions |
+| `OPENAI_API_KEY` | empty | Enables the optional **Redraw with AI** button (see below) |
+| `PICTOSVG_AI_IMAGE_MODEL` | `gpt-image-2.6-sunburst` | OpenAI image model used for redrawing |
+| `PICTOSVG_AI_IMAGE_QUALITY` | `medium` | Image quality requested (`low`, `medium`, `high`) |
+| `PICTOSVG_AI_TIMEOUT` | `150` | Seconds to wait for a redraw |
 
 ## Using it
 
@@ -132,30 +134,42 @@ authorization, expiry/cleanup and rejection of invalid or malicious uploads.
 | Import into LightBurn / VCarve / Aspire / Inkscape | **Not verified** |
 | Real laser or CNC output | **Not verified** |
 | Real photographs | **Not tested** (the photo fixture is a generated scene) |
+| AI Redraw against the live OpenAI API | **Not verified** (no key available) |
 
 PicToSVG creates vector files; it does not generate G-code and cannot guarantee a design is
 safe to cut. Always check the file in your laser/CNC software first.
 
-## Optional: AI Suggest Settings
+## Optional: Redraw with AI
 
-With an Anthropic API key in `.env` (`ANTHROPIC_API_KEY=...`), an **AI Suggest Settings** button
-appears next to Convert. One click sends a reduced copy of the picture, plus the black-and-white
-version the current settings produce, to Claude. Claude picks the preset, detail, smoothing,
-noise removal, invert, threshold and contrast; the app applies them and converts. You can still
-change every setting afterwards.
+Photos and busy pictures trace poorly because tracing only separates dark from light. With an
+OpenAI API key in `.env` (`OPENAI_API_KEY=...`), a **Redraw with AI** button appears next to
+Convert:
 
-- The AI only chooses settings. The vectors always come from the normal local tracing.
+**Original → AI Redraw → normal trace → download.**
+
+1. Click **Redraw with AI**. The picture is sent to OpenAI's image model, which redraws it as
+   clean black-and-white line art (this can take a minute or two).
+2. The redrawn picture appears beside the result. Use **Picture to trace** to switch between
+   *Original picture* and *AI redrawn picture* and compare.
+3. Convert and download as usual. Your original upload is never changed.
+
+Things to know:
+
+- AI may reinterpret, omit or alter details. Always compare with the original.
 - It is never required: without a key the button is disabled and everything else works.
-- Each click is a paid API call on your key and sends the picture to Anthropic, so it only
-  happens when the button is pressed (limited to 6 per minute per visitor).
-- The key stays on the server. Get one at <https://console.anthropic.com/>.
-- Status: covered by automated tests with a stand-in for the API; **not yet run against the
-  live Anthropic API**, so suggestion quality is unmeasured.
+- Each click is a paid API call on your key and sends the picture to OpenAI, so it happens only
+  when the button is pressed (limited to 4 per minute per visitor).
+- The key stays on the server. Create one at <https://platform.openai.com/api-keys>; OpenAI may
+  require organization verification before image models can be used.
+- Behind Nginx, raise `proxy_read_timeout` / `fastcgi_read_timeout` above `PICTOSVG_AI_TIMEOUT`
+  (default 150 s) or long redraws will be cut off. PHP's built-in dev server handles one request
+  at a time, so other visitors wait while a redraw runs.
+- Status: covered by automated tests with a faked API and tried in a browser against a local
+  stand-in; **not yet run against the live OpenAI API**, so real redraw quality, speed and cost
+  are unmeasured.
 
 ## Not implemented (yet)
 
-- **AI Redraw** (an AI redrawing a photo as clean line art before tracing) — Claude reads
-  images but does not generate them, so this would need a separate image-generation provider.
 - True centerline (single-stroke) tracing, colour tracing, VTracer, intersection warnings for
   cut paths, background queues.
 

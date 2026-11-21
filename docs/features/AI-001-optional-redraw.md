@@ -1,45 +1,70 @@
-# AI-001: Optional AI redraw
-
-Status: Gated only. Redraw is not implemented. Verification: Automated Tested (gating and the 503
-response).
+# AI-001 — Optional AI Redraw
 
 ## Scope
 
-The gating for an optional AI redraw step before tracing. It covers configuration, status reporting,
-the disabled button, and an endpoint that refuses cleanly. No provider is integrated. See
-[ADR 0004](../adr/0004-ai-redraw-gated-not-implemented.md).
+`Original → optional AI Redraw → normal Trace → Optimise`. A user-triggered step that asks an
+image model to redraw the upload as clean black-and-white line art, which the standard pipeline
+then traces. The provider is OpenAI image editing (see [ADR 0005](../adr/0005-openai-image-editing-for-ai-redraw.md)).
 
 ## Behaviour
 
-- Configuration: `PICTOSVG_AI_PROVIDER` and `PICTOSVG_AI_API_KEY`. Both must be set **and** the provider must
-  appear in `OptionalAiRedrawService::IMPLEMENTED_PROVIDERS`. That list is empty, so the feature is never
-  configured.
-- `GET /api/ai/status` returns `{configured, message}`. The message says that standard conversion works
-  without AI.
-- `POST /api/ai/redraw` with `{id, token}` checks the conversion authorisation first (403 on a bad
-  token), then returns `503` with `ai_unavailable`.
-- The web page shows the AI Redraw button disabled and the note "AI Redraw is not configured on this
-  server. Standard conversion works without it."
-- No outbound request is made.
-- The AI routes are separate from the conversion path. Conversion never calls AI.
+- Enabled only when `OPENAI_API_KEY` is set. Otherwise the **Redraw with AI** button is disabled
+  with an explanation and `POST /api/ai/redraw` returns `503 ai_unavailable`.
+- `OptionalAiRedrawService::redraw()`:
+  1. Picks the closest canvas the model supports (`1024x1024`, `1536x1024`, `1024x1536`) and pads
+     the upright, white-flattened, metadata-stripped upload onto it with ImageMagick. Nothing is cropped.
+  2. `POST {base}/images/edits` (JSON) with `model` (`PICTOSVG_AI_IMAGE_MODEL`, default
+     `gpt-image-2.6-sunburst`), the fixed prompt in `OptionalAiRedrawService::PROMPT`, the picture as a
+     PNG data URL in `images[0].image_url`, `size`, `quality` (`PICTOSVG_AI_IMAGE_QUALITY`, default
+     `medium`), `output_format: png`, `background: opaque`, `n: 1`. Timeout `PICTOSVG_AI_TIMEOUT`
+     (150 s), no retry. The host is pinned by `PICTOSVG_AI_BASE_URL` (default `https://api.openai.com/v1`).
+  3. Treats the answer (`data[0].b64_json`) as untrusted: strict base64, size cap, the same
+     content-based validation as an upload, then re-encoding through ImageMagick to an opaque,
+     metadata-free PNG, cropped back to the box the picture occupied so proportions match the original.
+  4. Stores `redraw.png` + `redraw.json` in the conversion directory. `original.bin` is never touched.
+     A failed redraw leaves any previous redraw in place.
+- `GET /api/ai/redraw/{id}?token=…` serves the stored redraw for comparison.
+- `/api/svg/convert` takes `source: original|redraw`. The redraw has its own bitmap-cache key
+  (it includes the redraw version), so redrawing again is never traced from a stale cache. Results
+  traced from a redraw carry a warning that AI may reinterpret, omit or alter details.
+- UI: after a redraw, a **Picture to trace** switch (Original picture / AI redrawn picture) appears;
+  the left preview panel shows the selected picture so the two can be compared, and the result is
+  re-converted on each switch. Uploading or removing an image clears the redraw.
 
-## Acceptance criteria
+## Privacy and cost
 
-1. Status reports not configured by default.
-2. Credentials alone do not enable the feature.
-3. Redraw returns 503 `ai_unavailable` after authorisation.
-4. The response never contains the key.
-5. Standard conversion still works after a redraw attempt.
-6. The home page shows the not-configured note.
+- The picture leaves the server only on an explicit click. Normal conversion sends nothing anywhere.
+- Each click is one billed request on the server's key. Rate limit: 4 per minute per IP. There is no
+  other spending control.
+- The key is read server-side only; it is never rendered into the page or returned by the API, and
+  provider error bodies are not passed to the client.
 
-## Tests
+## Acceptance tests (`tests/Feature/AiRedrawTest.php`)
 
-- `tests/Feature/DownloadAndLifecycleTest.php::test_ai_redraw_is_reported_unavailable_and_never_blocks_conversion`
-- `tests/Feature/DownloadAndLifecycleTest.php::test_home_page_renders_the_three_steps_without_ai`
+- `test_feature_is_off_without_a_key_and_conversion_is_unaffected`
+- `test_key_enables_the_button_and_never_reaches_the_browser`
+- `test_redraw_sends_the_padded_picture_and_stores_the_answer_beside_the_original`
+- `test_padding_is_removed_so_the_redraw_keeps_the_original_proportions`
+- `test_user_can_trace_either_the_redraw_or_the_original`
+- `test_redrawing_again_replaces_the_redraw_and_is_not_served_from_a_stale_cache`
+- `test_requires_the_conversion_token_before_any_paid_call`
+- `test_provider_failures_are_reported_cleanly_and_leave_everything_intact`
+- `test_a_failed_redraw_keeps_the_previous_redraw`
+
+## Verification level
+
+- **Automated Tested**: OpenAI is replaced by `Http::fake`; stray HTTP requests are forbidden in tests.
+- The button flow (redraw → compare → switch source → trace) was exercised in a browser against a
+  local stand-in for the image endpoint; the request it received had the intended path, bearer
+  header, model, size, quality and PNG data URL.
+- **Not Verified against the live OpenAI API**: no key was available. The request format follows the
+  OpenAI API reference as read on 2026-11-21 but has never been accepted by the real service, and
+  redraw quality, latency and cost are unmeasured.
 
 ## Limitations
 
-- No provider adapter, so no AI output, comparison or choice of source image.
-- No privacy, retention, file size or cost documentation, because there is no provider.
-- The button is always rendered (disabled). The master spec preferred showing it only when configured.
-- The redraw endpoint is throttled as an upload route. Those 20 requests per minute are shared with uploads.
+- The model may move, simplify or invent details; padding removal assumes it keeps the composition
+  in place. Pixel-accurate alignment with the original is not guaranteed.
+- Output resolution is at most 1536 px on the long side.
+- Long requests need matching proxy timeouts; the PHP dev server blocks other requests meanwhile.
+- If the default model id is not available to an account, set `PICTOSVG_AI_IMAGE_MODEL`.

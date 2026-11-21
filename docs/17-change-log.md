@@ -53,3 +53,15 @@ Known issues of note: see [16-known-issues.md](16-known-issues.md), especially K
 - `ConversionPipeline::prepareBitmap()` extracted so the AI is shown the exact bitmap that is traced.
 - Tests: 61 passing (19 unit, 42 feature). The live Anthropic API has not been called.
 - Repository licensed under Apache-2.0.
+
+## 2026-11-21 — AI Redraw with OpenAI (AI-001); Claude feature removed
+
+- **Removed** "AI Suggest Settings" (AI-002), its endpoint `POST /api/ai/suggest`, its tests and the
+  `anthropic-ai/sdk` dependency, at the owner's request.
+- **Added** AI Redraw: `OptionalAiRedrawService` now calls OpenAI image editing; `POST /api/ai/redraw`
+  stores a redraw beside the original, `GET /api/ai/redraw/{id}` serves it, and
+  `/api/svg/convert` accepts `source: original|redraw`. UI: **Redraw with AI** button and a
+  **Picture to trace** switch for comparison. See ADR 0005 and `docs/features/AI-001-optional-redraw.md`.
+- Config: `OPENAI_API_KEY`, `PICTOSVG_AI_IMAGE_MODEL`, `PICTOSVG_AI_IMAGE_QUALITY`, `PICTOSVG_AI_TIMEOUT`,
+  `PICTOSVG_AI_BASE_URL`. `PICTOSVG_AI_PROVIDER` / `PICTOSVG_AI_API_KEY` no longer exist.
+- Tests: 62 passing (19 unit, 43 feature). The live OpenAI API has not been called.

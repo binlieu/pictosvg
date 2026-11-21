@@ -24,6 +24,7 @@ final class ConversionSettings
         public readonly ?int $corners,
         public readonly bool $outline,
         public readonly bool $transparentBackground,
+        public readonly string $source = 'original',
     ) {}
 
     public static function fromArray(array $in): self
@@ -47,6 +48,7 @@ final class ConversionSettings
             corners: isset($in['corners']) ? (int) $in['corners'] : null,
             outline: (bool) ($in['outline_only'] ?? ($preset === 'outline')),
             transparentBackground: (bool) ($in['transparent_background'] ?? true),
+            source: ($in['source'] ?? 'original') === 'redraw' ? 'redraw' : 'original',
         );
     }
 

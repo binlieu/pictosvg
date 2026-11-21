@@ -26,7 +26,7 @@ Status as of 2026-11-21: MVP implemented. See [14-current-status.md](14-current-
 - Not a vector editor.
 - Not a G-code generator or a cut-safety validator.
 - Not a multi-user service. No accounts, billing, history or cloud storage.
-- Not dependent on AI. The optional AI redraw feature is gated and not implemented.
+- Not dependent on AI. The optional AI Redraw feature (OpenAI image editing) works only when a key is configured and only on an explicit click.
 
 ## Stack
 
@@ -44,7 +44,7 @@ Status as of 2026-11-21: MVP implemented. See [14-current-status.md](14-current-
 - [ADR 0001](adr/0001-potrace-as-tracing-engine.md): Potrace is the tracing engine. VTracer is not used.
 - [ADR 0002](adr/0002-stateless-token-access-no-database.md): stateless id and HMAC token access. No database.
 - [ADR 0003](adr/0003-imagemagick-cli-instead-of-imagick-extension.md): ImageMagick is called as a CLI, not through the PHP extension.
-- [ADR 0004](adr/0004-ai-redraw-gated-not-implemented.md): AI redraw is gated and not implemented.
+- [ADR 0005](adr/0005-openai-image-editing-for-ai-redraw.md): AI Redraw uses OpenAI image editing (supersedes ADR 0004).
 
 ## Where to read next
 

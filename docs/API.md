@@ -106,41 +106,37 @@ attributes are rewritten (the geometry and `viewBox` are never re-traced or defo
 ## GET /api/ai/status
 
 ```json
-{
-  "configured": false,
-  "message": "AI Redraw is not configured on this server. Standard conversion works without it.",
-  "suggest_configured": false
-}
+{ "configured": false, "message": "AI Redraw is not set up on this server. Standard conversion works without it." }
 ```
 
-`configured` refers to image redraw (not implemented, always `false`). `suggest_configured` is
-`true` when `ANTHROPIC_API_KEY` is set on the server.
+`configured` is `true` when `OPENAI_API_KEY` is set on the server.
 
-## POST /api/ai/suggest
+## POST /api/ai/redraw
 
-Optional "AI Suggest Settings". Same JSON body as `/api/svg/convert` (the settings currently in
-the UI). The server sends two reduced PNGs (longest side ≤ 1024 px) to the Anthropic API — the
-uploaded picture and the black-and-white bitmap the current settings produce — and Claude returns
-values for the normal controls. The vectors are still produced by `/api/svg/convert`.
+Optional AI Redraw. Body `{id, token}`. The server pads the upload onto the closest supported
+canvas (`1024x1024`, `1536x1024` or `1024x1536`), sends it to the OpenAI image-edit endpoint and
+stores the validated, re-encoded answer beside the original (the upload is never modified).
+This call can take a minute or two.
 
 `200` response:
 
 ```json
-{
-  "settings": {
-    "preset": "engrave", "detail": 6, "smoothing": 8, "noise": 7,
-    "invert": false, "threshold": null, "contrast": 0, "outline_only": false
-  },
-  "explanation": "Short plain-language reason."
-}
+{ "width": 1536, "height": 1024, "version": "9c1e0a7b52d4" }
 ```
 
-Every value is type-checked and clamped server-side. Errors use code `ai_unavailable`:
-`503` when no key is configured, the key is rejected, or the AI service is unreachable or busy;
-`422` if the model declines the picture; `502` if it returns nothing usable. Limited to 6
-requests per minute per IP because each call is billed to the server's key.
+Errors use code `ai_unavailable`: `503` when no key is configured, the key is rejected, the
+provider is busy, unreachable, too slow or returns an error; `422` when the provider declines the
+picture; `502` when the answer is not a usable image. A missing or wrong `id`/`token` yields
+`403` and no provider call is made. Limited to 4 requests per minute per IP because each call is
+billed to the server's key.
 
-## POST /api/ai/redraw
+## GET /api/ai/redraw/{temporaryId}?token=…
 
-Body `{id, token}`. Image redraw is not implemented: this endpoint always returns `503` with
-code `ai_unavailable`.
+Returns the stored redraw as `image/png` (`nosniff`, `no-store`) so it can be compared with the
+original. `404` if the picture has not been redrawn.
+
+## Tracing the redraw
+
+`/api/svg/convert` and `/api/svg/optimize` accept `"source": "original" | "redraw"` (default
+`original`). With `redraw`, the stored redraw is traced by the normal pipeline and the response
+carries a warning that AI may have altered details. `409` (`conversion_failed`) if no redraw exists.
