@@ -149,9 +149,10 @@ See [`docs/`](docs): [API](docs/API.md), [Architecture](docs/ARCHITECTURE.md),
 [Installation](docs/INSTALLATION.md), [Testing](docs/TESTING.md),
 [Known issues](docs/16-known-issues.md).
 
-## License notes
+## License
 
-Potrace is licensed under the GPL and ImageMagick under its own permissive license; both are
-used as external command-line programs and are not bundled with this repository. Bootstrap
-(MIT) is vendored in `public/vendor/bootstrap`. No license has been chosen for PicToSVG's own
-code yet.
+PicToSVG is licensed under the [Apache License 2.0](LICENSE). Copyright 2026 ChiLT.
+
+Third-party tools keep their own licenses: Potrace (GPL) and ImageMagick are used as external
+command-line programs and are not bundled with this repository. Bootstrap (MIT) is vendored in
+`public/vendor/bootstrap`; the Laravel framework (MIT) is installed by Composer.
