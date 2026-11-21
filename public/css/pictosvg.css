@@ -74,7 +74,10 @@ body {
 
 /* Presets */
 .preset-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
-@media (min-width: 768px) { .preset-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 576px) { .preset-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 992px) { .preset-grid { grid-template-columns: repeat(4, 1fr); } }
+.color-options { background: var(--ps-panel-2); border: 1px solid var(--ps-border); border-radius: 12px; padding: 1rem 1.1rem; }
+.color-options.d-none { display: none; }
 .preset-input { position: absolute; opacity: 0; pointer-events: none; }
 .preset-card { display: block; height: 100%; cursor: pointer; padding: .9rem 1rem; border: 2px solid var(--ps-border); border-radius: 12px; background: var(--ps-panel-2); transition: border-color .15s, background .15s; }
 .preset-card:hover { border-color: #5b626e; }

@@ -8,6 +8,7 @@ use App\Services\Svg\PathGeometry;
 use App\Services\Svg\SvgExportService;
 use App\Services\Svg\SvgOptimizationService;
 use App\Services\Svg\SvgValidationService;
+use App\Services\Tracing\ColorPalette;
 use App\Services\Tracing\VectorTracingService;
 use App\Support\TemporaryFiles\ConversionStore;
 
@@ -34,13 +35,69 @@ class ConversionPipeline
         if ($requireExisting && $this->store->readJson($dir, 'latest.json') === null) {
             throw PicToSvgException::conversionFailed('Convert the image first.', 409);
         }
-        $warnings = [];
+        $result = $s->preset === 'color'
+            ? $this->traceColour($dir, $source, $s)
+            : $this->traceMono($dir, $source, $s);
+        $svg = $result['svg'];
+        $rawNodes = $result['raw_nodes'];
+        $warnings = $result['warnings'];
+        if ($s->source === 'redraw') {
+            array_unshift($warnings, 'This result was traced from the AI-redrawn picture. AI may reinterpret, omit or alter details — compare it with your original.');
+        }
+        if (strlen($svg) > (int) config('pictosvg.max_svg_bytes')) {
+            throw PicToSvgException::conversionFailed('The result is too complex. Try lowering Detail or raising Noise Removal.');
+        }
+        $stats = $this->validator->validate($svg);
 
+        if ($s->outline) {
+            if ($stats['open_subpaths'] > 0) {
+                $warnings[] = sprintf('%d outline(s) are not closed and may not cut cleanly.', $stats['open_subpaths']);
+            }
+            $warnings[] = 'Outlines follow the edges of dark areas, so a drawn line becomes two cut lines (one on each side). Always check the file in your laser/CNC software before cutting.';
+        }
+        if ($s->preset === 'lineart') {
+            $warnings[] = 'Line Art traces the outline of each drawn line as a filled shape. It does not create single-stroke centerlines.';
+        }
+        if ($stats['paths'] > 1500) {
+            $warnings[] = 'This result has a very large number of shapes. Photos convert only approximately — try raising Noise Removal or lowering Detail.';
+        }
+
+        $version = $s->versionKey($id.$source['tag']);
+        $this->store->writeAtomic($dir.'/result-'.$version.'.svg', $svg);
+        $this->store->writeJson($dir, 'latest.json', ['version' => $version]);
+        $this->pruneVersions($dir, $version);
+
+        return [
+            'id' => $id,
+            'version' => $version,
+            'svg' => $svg,
+            'stats' => [
+                'paths' => $stats['paths'],
+                'nodes' => $stats['nodes'],
+                'nodes_before' => $s->smoothCurves ? $rawNodes : $stats['nodes'],
+                'width' => $stats['width'],
+                'height' => $stats['height'],
+                'unit' => $stats['unit'],
+                'bytes' => strlen($svg),
+                'pixel_width' => $stats['pixel_width'],
+                'pixel_height' => $stats['pixel_height'],
+                'colors' => $result['colors'],
+            ],
+            'warnings' => $warnings,
+            'engine' => VectorTracingService::ENGINE,
+        ];
+    }
+
+    /**
+     * Black-and-white presets: one prepared bitmap, traced raw and optimised.
+     *
+     * @return array{svg: string, raw_nodes: int, warnings: list<string>, colors: list<string>}
+     */
+    private function traceMono(string $dir, array $source, ConversionSettings $s): array
+    {
+        $warnings = [];
         // --- 1. Prepared bitmap (cached per image-preparation settings) -----------------
         ['bitmap' => $bitmap, 'size' => $size, 'long' => $long, 'analysis' => $analysis] = $this->prepareBitmap($dir, $source, $s);
-        if ($s->source === 'redraw') {
-            $warnings[] = 'This result was traced from the AI-redrawn picture. AI may reinterpret, omit or alter details — compare it with your original.';
-        }
         if ($analysis['use_alpha_shape']) {
             $warnings[] = 'This picture is light artwork on a transparent background, so its visible shape was traced.';
         }
@@ -89,49 +146,131 @@ class ConversionPipeline
             unset($raw);
         }
 
-        // --- 4. Export + validate the exact bytes that will be served -------------------
-        $svg = $this->export->build($shapes, $exportOptions);
-        if (strlen($svg) > (int) config('pictosvg.max_svg_bytes')) {
-            throw PicToSvgException::conversionFailed('The result is too complex. Try lowering Detail or raising Noise Removal.');
-        }
-        $stats = $this->validator->validate($svg);
+        return ['svg' => $this->export->build($shapes, $exportOptions), 'raw_nodes' => $rawNodes, 'warnings' => $warnings, 'colors' => []];
+    }
 
-        if ($s->outline) {
-            if ($stats['open_subpaths'] > 0) {
-                $warnings[] = sprintf('%d outline(s) are not closed and may not cut cleanly.', $stats['open_subpaths']);
+    /**
+     * Colour preset: the picture is reduced to its solid colours and every colour becomes a
+     * filled layer. Layers are stacked: layer k is traced from the area of colour k PLUS all
+     * colours painted above it, so adjacent colours overlap underneath and never show a gap.
+     *
+     * @return array{svg: string, raw_nodes: int, warnings: list<string>, colors: list<string>}
+     */
+    private function traceColour(string $dir, array $source, ConversionSettings $s): array
+    {
+        $warnings = [];
+        $size = $s->workingSize($source['width'], $source['height']);
+        $long = max($size['width'], $size['height']);
+        // Colours are separated and traced at (at most) the picture's own resolution, where the
+        // tracer fits pixel edges best; the geometry is then scaled up to the output size.
+        $qw = min($size['width'], $source['width']);
+        $qh = min($size['height'], $source['height']);
+        $up = $size['width'] / $qw;
+        $tmp = fn (string $ext) => $dir.'/tmp-'.bin2hex(random_bytes(6)).'.'.$ext;
+        $quant = $tmp('png');
+        $alpha = null;
+        $mask = $tmp('pgm');
+
+        try {
+            // 1. Choose the picture's solid colours.
+            $probe = $this->preprocess->colourHistogram($source['file'], $source['format'], $this->preprocess->paletteProbeOperations(32, $s->contrast));
+            $palette = ColorPalette::choose($probe, $s->colors ?? 12);
+            if (count($palette) < 2) {
+                throw PicToSvgException::conversionFailed('This picture has only one colour, so there is nothing to trace.');
             }
-            $warnings[] = 'Outlines follow the edges of dark areas, so a drawn line becomes two cut lines (one on each side). Always check the file in your laser/CNC software before cutting.';
-        }
-        if ($s->preset === 'lineart') {
-            $warnings[] = 'Line Art traces the outline of each drawn line as a filled shape. It does not create single-stroke centerlines.';
-        }
-        if ($stats['paths'] > 1500) {
-            $warnings[] = 'This result has a very large number of shapes. Photos convert only approximately — try raising Noise Removal or lowering Detail.';
-        }
 
-        $version = $s->versionKey($id.$source['tag']);
-        $this->store->writeAtomic($dir.'/result-'.$version.'.svg', $svg);
-        $this->store->writeJson($dir, 'latest.json', ['version' => $version]);
-        $this->pruneVersions($dir, $version);
+            // 2. Snap every pixel to one of those colours.
+            $this->preprocess->quantise($source['file'], $source['format'], $quant, $palette, $qw, $qh, $s->contrast);
+            $counts = $this->preprocess->colourHistogram($quant, 'png');
+            arsort($counts);
+            $border = $this->preprocess->colourHistogram($quant, 'png', $this->preprocess->borderOperations());
+            arsort($border);
+
+            $opaque = $source['tag'] !== 'original' || ($this->analysis($dir, $source)['opaque'] ?? true);
+            if (! $opaque) {
+                $alpha = $tmp('png');
+                $this->preprocess->transparencyMask($source['file'], $source['format'], $alpha, $qw, $qh);
+            }
+
+            // 3. Paint order: background first, then the largest areas, small details on top.
+            $order = array_keys($counts);
+            $background = null;
+            if ($opaque && $border !== [] && reset($border) / max(1, array_sum($border)) >= 0.5) {
+                $background = (string) array_key_first($border);
+                $order = array_values(array_unique([$background, ...$order]));
+            }
+            if ($background !== null && $s->transparentBackground) {
+                array_shift($order); // leave the background out: nothing is drawn there
+            }
+
+            // 4. Trace each stacked layer.
+            $speck = $s->speckArea($qw / $source['width'], max($qw, $qh));
+            $base = ['turdsize' => $speck, 'alphamax' => $s->alphamax()];
+            $scale = fn (array $shapes) => array_map(fn ($shape) => PathGeometry::transform($shape, $up, $size['height'] / $qh, 0.0, 0.0), $shapes);
+            $layers = [];
+            $fingerprints = [];
+            $rawNodes = 0;
+            foreach ($order as $index => $colour) {
+                $this->preprocess->layerMask($quant, array_slice($order, $index), $alpha, $s->noise >= 3, $mask);
+                if ($s->smoothCurves) {
+                    foreach ($this->tracer->trace($mask, $tmp('svg'), $base + ['opttolerance' => null]) as $shape) {
+                        foreach ($shape as $subpath) {
+                            $rawNodes += PathGeometry::nodeCount($subpath);
+                        }
+                    }
+                    $shapes = $this->optimizer->optimize(
+                        $scale($this->tracer->trace($mask, $tmp('svg'), $base + ['opttolerance' => $s->optTolerance()])),
+                        ['tolerance' => $s->simplifyTolerance($long), 'min_area' => $speck * $up * $up]
+                    )['shapes'];
+                } else {
+                    $shapes = $scale($this->tracer->trace($mask, $tmp('svg'), $base + ['opttolerance' => null]));
+                }
+                if ($shapes === []) {
+                    continue;
+                }
+                // A layer whose outline equals the one below it hides that one completely
+                // (the lower colour has no visible pixels): replace instead of stacking.
+                $fingerprint = md5(implode('|', array_map(fn ($shape) => PathGeometry::serialize($shape, 0), $shapes)));
+                if ($layers !== [] && $fingerprints[count($layers) - 1] === $fingerprint) {
+                    array_pop($layers);
+                }
+                $layers[] = ['color' => $colour, 'shapes' => $shapes];
+                $fingerprints[count($layers) - 1] = $fingerprint;
+            }
+        } finally {
+            @unlink($quant);
+            @unlink($mask);
+            if ($alpha !== null) {
+                @unlink($alpha);
+            }
+        }
+        if ($layers === []) {
+            throw PicToSvgException::conversionFailed('Nothing was found to trace. Try lowering Noise Removal.');
+        }
+        if (count($palette) >= ($s->colors ?? 12)) {
+            $warnings[] = 'This picture has more colours than the limit, so similar colours were merged. Photos and gradients convert only approximately.';
+        }
 
         return [
-            'id' => $id,
-            'version' => $version,
-            'svg' => $svg,
-            'stats' => [
-                'paths' => $stats['paths'],
-                'nodes' => $stats['nodes'],
-                'nodes_before' => $s->smoothCurves ? $rawNodes : $stats['nodes'],
-                'width' => $stats['width'],
-                'height' => $stats['height'],
-                'unit' => $stats['unit'],
-                'bytes' => strlen($svg),
-                'pixel_width' => $stats['pixel_width'],
-                'pixel_height' => $stats['pixel_height'],
-            ],
+            'svg' => $this->export->buildColor($layers, [
+                'pixel_width' => $size['width'], 'pixel_height' => $size['height'], 'width' => $s->width, 'unit' => $s->unit,
+            ]),
+            'raw_nodes' => $rawNodes,
             'warnings' => $warnings,
-            'engine' => VectorTracingService::ENGINE,
+            'colors' => array_column($layers, 'color'),
         ];
+    }
+
+    /** @return array{opaque: bool, use_alpha_shape: bool} */
+    private function analysis(string $dir, array $source): array
+    {
+        $analysis = $this->store->readJson($dir, 'analysis.json');
+        if ($analysis === null) {
+            $analysis = $this->preprocess->analyseTransparency($source['file'], $source['format']);
+            $this->store->writeJson($dir, 'analysis.json', $analysis);
+        }
+
+        return $analysis;
     }
 
     /**

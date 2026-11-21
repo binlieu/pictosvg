@@ -47,7 +47,9 @@ JSON body. Only `id` and `token` are required; everything else has a default.
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `id`, `token` | string | — | from upload |
-| `preset` | `engrave` \| `outline` \| `lineart` | `engrave` | |
+| `preset` | `engrave` \| `outline` \| `lineart` \| `color` | `engrave` | |
+| `colors` | int 2–16 \| null | null = automatic (up to 12) | `color` preset only: maximum number of colours |
+| `source` | `original` \| `redraw` | `original` | trace the upload or the stored AI redraw |
 | `detail` | int 1–10 | 7 | |
 | `smoothing` | int 0–10 | 8 | |
 | `noise` | int 0–10 | 5 | |
@@ -61,7 +63,7 @@ JSON body. Only `id` and `token` are required; everything else has a default.
 | `speck` | int 0–1000 \| null | null = from Noise Removal | Advanced: minimum speck size (px² of source image) |
 | `corners` | int 0–10 \| null | null = from Smoothing | Advanced: corner preservation (10 = keep all corners sharp) |
 | `outline_only` | bool | false (true for `outline` preset) | Advanced |
-| `transparent_background` | bool | true | Advanced: false adds a white background rectangle |
+| `transparent_background` | bool | true (false for `color`) | Advanced: false adds a white background rectangle. For `color`: true leaves out the background colour |
 
 `200` response:
 
@@ -79,7 +81,8 @@ JSON body. Only `id` and `token` are required; everything else has a default.
     "unit": "mm",
     "bytes": 18234,
     "pixel_width": 1500,
-    "pixel_height": 1000
+    "pixel_height": 1000,
+    "colors": []
   },
   "warnings": ["…plain-language warning…"],
   "engine": "potrace"
@@ -88,6 +91,9 @@ JSON body. Only `id` and `token` are required; everything else has a default.
 
 `svg` is the exact validated document that the download endpoint serves for this `version`.
 `nodes_before` is the measured node count of the unoptimised trace of the same bitmap.
+`stats.colors` lists the fill colours of a `color` result in paint order (bottom first); it is
+empty for the black-and-white presets. `threshold`, `invert` and `outline_only` are ignored by
+the `color` preset.
 
 ## POST /api/svg/optimize
 

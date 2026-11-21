@@ -25,6 +25,7 @@ final class ConversionSettings
         public readonly bool $outline,
         public readonly bool $transparentBackground,
         public readonly string $source = 'original',
+        public readonly ?int $colors = null,
     ) {}
 
     public static function fromArray(array $in): self
@@ -46,9 +47,11 @@ final class ConversionSettings
             tolerance: isset($in['tolerance']) ? (float) $in['tolerance'] : null,
             speck: isset($in['speck']) ? (int) $in['speck'] : null,
             corners: isset($in['corners']) ? (int) $in['corners'] : null,
-            outline: (bool) ($in['outline_only'] ?? ($preset === 'outline')),
-            transparentBackground: (bool) ($in['transparent_background'] ?? true),
+            outline: $preset !== 'color' && (bool) ($in['outline_only'] ?? ($preset === 'outline')),
+            // Colour pictures keep their background colour unless asked otherwise.
+            transparentBackground: (bool) ($in['transparent_background'] ?? ($preset !== 'color')),
             source: ($in['source'] ?? 'original') === 'redraw' ? 'redraw' : 'original',
+            colors: isset($in['colors']) ? (int) $in['colors'] : null,
         );
     }
 

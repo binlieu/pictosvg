@@ -10,8 +10,9 @@ No account, no database, no API key.
 
 - Real vector paths (cubic Béziers traced by [Potrace](https://potrace.sourceforge.net/)) — never a
   picture embedded in an SVG.
-- Three presets: **Engrave** (filled black-and-white), **Outline Cut** (closed contours),
-  **Line Art** (traces drawn lines as outlined shapes — not single-stroke centerlines).
+- Four presets: **Engrave** (filled black-and-white), **Outline Cut** (closed contours),
+  **Line Art** (traces drawn lines as outlined shapes — not single-stroke centerlines) and
+  **Color** (flat-color pictures become colored vector shapes in the same colors).
 - Three plain sliders — Detail, Smoothing, Noise Removal — plus optional Advanced Settings.
 - Output width in **millimeters or inches**; height follows the picture's aspect ratio.
 - Side-by-side preview with zoom/pan, path and node counts measured from the real file.
@@ -139,6 +140,22 @@ authorization, expiry/cleanup and rejection of invalid or malicious uploads.
 PicToSVG creates vector files; it does not generate G-code and cannot guarantee a design is
 safe to cut. Always check the file in your laser/CNC software first.
 
+## Color pictures
+
+Choose the **Color** preset for logos, clip art and drawings made of flat colors. PicToSVG finds
+the picture's solid colors and turns each one into its own group of filled shapes in exactly that
+color (`<g fill="#rrggbb">`), so the SVG looks like the picture and each color can be selected as
+a separate layer in LightBurn, Inkscape and similar programs.
+
+- **Number of colors:** *Automatic* finds them (up to 12); or set a limit from 2 to 16 and the
+  nearest colors are merged.
+- **Leave out the background color:** off by default (the SVG is a complete picture). Turn it on
+  to drop the color that fills the picture's border; areas of that color become empty.
+- Anti-aliased edges and JPEG noise are merged into the real colors, and color areas overlap
+  underneath each other so no gaps show between them.
+- Photos and gradients are not flat color: they convert only approximately, as bands of color.
+- Threshold, invert and outline-only do not apply to this preset.
+
 ## Optional: Redraw with AI
 
 Photos and busy pictures trace poorly because tracing only separates dark from light. With an
@@ -170,7 +187,7 @@ Things to know:
 
 ## Not implemented (yet)
 
-- True centerline (single-stroke) tracing, colour tracing, VTracer, intersection warnings for
+- True centerline (single-stroke) tracing, gradient/photo-quality color tracing, VTracer, intersection warnings for
   cut paths, background queues.
 
 ## Documentation

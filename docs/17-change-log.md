@@ -65,3 +65,12 @@ Known issues of note: see [16-known-issues.md](16-known-issues.md), especially K
 - Config: `OPENAI_API_KEY`, `PICTOSVG_AI_IMAGE_MODEL`, `PICTOSVG_AI_IMAGE_QUALITY`, `PICTOSVG_AI_TIMEOUT`,
   `PICTOSVG_AI_BASE_URL`. `PICTOSVG_AI_PROVIDER` / `PICTOSVG_AI_API_KEY` no longer exist.
 - Tests: 62 passing (19 unit, 43 feature). The live OpenAI API has not been called.
+
+## 2026-11-21 — Color preset (TRACE-002)
+
+- New **Color** preset: flat-color pictures become colored vector layers in the picture's own colors
+  (`ColorPalette`, `ConversionPipeline::traceColour`, `SvgExportService::buildColor`).
+- New request fields `colors` (2–16 or automatic) and response field `stats.colors`.
+- UI: fourth preset card, "Number of colors" and "Leave out the background color" controls.
+- Page script and stylesheet links now carry a version query so browsers pick up updates.
+- Tests: 71 passing (19 unit, 52 feature).

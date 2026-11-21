@@ -45,6 +45,36 @@ class SvgExportService
     }
 
     /**
+     * Colour export: one group per colour, painted bottom to top. Each layer covers its own
+     * colour AND everything painted above it, so neighbouring colours never leave a gap.
+     *
+     * @param  list<array{color: string, shapes: list<list<array>>}>  $layers  bottom layer first
+     * @param  array{pixel_width: int, pixel_height: int, width: float, unit: string, precision?: int}  $o
+     */
+    public function buildColor(array $layers, array $o): string
+    {
+        $w = (int) $o['pixel_width'];
+        $h = (int) $o['pixel_height'];
+        [$width, $height] = $this->physicalSize((float) $o['width'], $w, $h);
+        $unit = $this->unit($o['unit']);
+
+        $svg = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+            .sprintf('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="%s%s" height="%s%s" viewBox="0 0 %d %d">', $width, $unit, $height, $unit, $w, $h)."\n";
+        foreach ($layers as $layer) {
+            if (preg_match('/\A#[0-9a-f]{6}\z/', $layer['color']) !== 1) {
+                throw new InvalidArgumentException('Invalid colour.');
+            }
+            $svg .= '<g fill="'.$layer['color'].'" fill-rule="nonzero" stroke="none">'."\n";
+            foreach ($layer['shapes'] as $shape) {
+                $svg .= '<path d="'.PathGeometry::serialize($shape, $o['precision'] ?? 1).'"/>'."\n";
+            }
+            $svg .= "</g>\n";
+        }
+
+        return $svg."</svg>\n";
+    }
+
+    /**
      * Rewrites ONLY the root width/height. The viewBox and every path stay byte-identical,
      * so re-dimensioning can never deform or re-trace the artwork.
      */

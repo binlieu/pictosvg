@@ -11,7 +11,7 @@ Status as of 2026-11-21: MVP implemented. See [14-current-status.md](14-current-
 ## What it does
 
 1. **Upload** a picture by drag and drop, file picker or paste (JPG/JPEG, PNG, WebP; up to 20 MB).
-2. **Convert** with one of three presets: **Engrave** (default), **Outline Cut** or **Line Art**.
+2. **Convert** with one of four presets: **Engrave** (default), **Outline Cut**, **Line Art** or **Color** (flat-color pictures to colored shapes).
    Optimise Smooth Curves is on by default.
 3. **Preview** the original and the SVG side by side. Zoom, pan, fit, and switch between side by
    side and SVG-only views. Check the path and node counts, the output size and any warnings.

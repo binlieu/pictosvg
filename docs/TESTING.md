@@ -3,7 +3,7 @@
 ## 1. Running the tests
 
 ```bash
-php artisan test                       # all 62 tests (Unit + Feature)
+php artisan test                       # all 71 tests (Unit + Feature)
 php artisan test --testsuite=Unit      # 19 unit tests
 php artisan test --testsuite=Feature   # 35 feature tests
 php artisan test --filter=test_logo_converts
@@ -17,7 +17,7 @@ tools. The tests do not mock the tracer.
 directory under the system temporary directory. It removes that directory afterwards and disables
 the throttle middleware.
 
-The result reported for this milestone: **62 tests passing**, reported by the developer on
+The result reported for this milestone: **71 tests passing**, reported by the developer on
 2026-11-21 (macOS, PHP 8.3.23, Laravel 13.43.0). Re-run the suite to confirm on your machine.
 
 `scripts/test-summary.sh` runs `php artisan test` and parses the final line of output as JSON. The
@@ -34,6 +34,7 @@ JSON output format has **not been verified** in this milestone.
 | `tests/Feature/ConversionTest.php` | 18 | Real conversions: logo defaults, holes, sharp corners, transparent PNG, light artwork on transparency, Noise Removal, optimisation node reduction and fill equivalence, smoothing monotonicity, Outline Cut closure, Line Art, photo-like image, rotated JPEG, advanced settings, blank image error, request validation and authorisation, optimise precondition, missing tracer. | TRACE-001, OPT-001, PRE-001, SYS-001 |
 | `tests/Feature/DownloadAndLifecycleTest.php` | 9 | Byte-identical download, re-dimensioning, token requirements, expiry and cleanup, version retention, token depends on app key, AI gating, home page content. | EXPORT-001, SYS-001, AI-001, VIEW-001 |
 | `tests/Feature/AiRedrawTest.php` | 9 | Optional AI Redraw with OpenAI replaced by `Http::fake` (stray HTTP requests are forbidden in every test): gating without a key, request contents, padding and proportions, tracing redraw or original, cache freshness, token requirement before any paid call, provider failure modes, key never exposed. The live API is never called. |
+| `tests/Feature/ColorConversionTest.php` | 9 | Color preset on real conversions: exact colours at known positions, no gaps between colours, background left out on request, colour limit, transparency, photo-like input, single-colour and bad parameters, download/resize, palette selection rules. |
 
 Test-method names in the feature specs are the exact names in these files.
 

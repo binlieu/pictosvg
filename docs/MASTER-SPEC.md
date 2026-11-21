@@ -320,3 +320,10 @@ Preset guidance:
 | Feature specs under `docs/features/` | Written for this milestone (eight) |
 | Importer verification evidence | Not verified |
 | Visual before and after comparison for representative images | Visual Reviewed (developer agent) for fixtures only |
+
+
+## Addendum (2026-11-21): Color preset
+
+Added at the owner's request, beyond the original master prompt: a fourth preset, **Color**, that
+converts flat-color pictures into SVG shapes in the same colors. Status: Implemented and Automated
+Tested; not importer-verified. Specification: [TRACE-002](features/TRACE-002-color-conversion.md).

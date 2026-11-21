@@ -138,6 +138,122 @@ class ImagePreprocessingService
     }
 
     /**
+     * Counts the colours of an image. Returns [hex => pixelCount] with lowercase #rrggbb keys.
+     *
+     * @param  list<string>  $operations  ImageMagick operations applied before counting
+     * @return array<string, int>
+     */
+    public function colourHistogram(string $file, string $format, array $operations = []): array
+    {
+        $out = $this->magick([$format.':'.$file.'[0]', ...$operations, '-depth', '8', '-format', '%c', 'histogram:info:']);
+        $colours = [];
+        if (preg_match_all('/^\s*(\d+):\s*\([^)]*\)\s*#([0-9A-Fa-f]{6})(?:[0-9A-Fa-f]{2})?\b/m', $out, $m, PREG_SET_ORDER)) {
+            foreach ($m as $row) {
+                $hex = '#'.strtolower($row[2]);
+                $colours[$hex] = ($colours[$hex] ?? 0) + (int) $row[1];
+            }
+        }
+
+        return $colours;
+    }
+
+    /** Operations that give a small, point-sampled, flattened copy reduced to at most $max colours. */
+    public function paletteProbeOperations(int $max, int $contrast): array
+    {
+        $ops = ['-auto-orient', '-background', 'white', '-alpha', 'remove', '-alpha', 'off', '-sample', '400x400>'];
+        if ($contrast !== 0) {
+            array_push($ops, '-brightness-contrast', '0x'.$contrast);
+        }
+
+        return [...$ops, '-dither', 'None', '-colors', (string) $max];
+    }
+
+    /**
+     * Writes a copy of the picture in which every pixel is exactly one of $palette's colours
+     * (no dithering).
+     *
+     * @param  list<string>  $palette  #rrggbb colours
+     */
+    public function quantise(string $file, string $format, string $output, array $palette, int $width, int $height, int $contrast): void
+    {
+        $paletteFile = $output.'.palette.png';
+        try {
+            $args = [];
+            foreach ($palette as $hex) {
+                $args[] = 'xc:'.$this->hex($hex);
+            }
+            $this->magick([...$args, '+append', 'png24:'.$paletteFile]);
+
+            $args = [$format.':'.$file.'[0]', '-auto-orient', '-background', 'white', '-alpha', 'remove', '-alpha', 'off', '-resize', $width.'x'.$height.'!'];
+            if ($contrast !== 0) {
+                array_push($args, '-brightness-contrast', '0x'.$contrast);
+            }
+            array_push($args, '-dither', 'None', '-remap', 'png:'.$paletteFile);
+            array_push($args, '-depth', '8', 'png24:'.$output);
+            $this->magick($args);
+        } finally {
+            @unlink($paletteFile);
+        }
+        if (! is_file($output)) {
+            throw PicToSvgException::conversionFailed();
+        }
+    }
+
+    /** White-where-transparent mask of the upload at the given size (for pictures with alpha). */
+    public function transparencyMask(string $file, string $format, string $output, int $width, int $height): void
+    {
+        $this->magick([$format.':'.$file.'[0]', '-auto-orient', '-alpha', 'extract', '-resize', $width.'x'.$height.'!', '-threshold', '50%', '-negate', '-depth', '8', 'png:'.$output]);
+    }
+
+    /**
+     * Writes a greyscale mask (black = the given colours) of a quantised image, ready for
+     * tracing. $clean removes one-pixel fringes (safe here because the mask has one channel).
+     *
+     * @param  list<string>  $colours  #rrggbb colours that belong to the layer
+     */
+    public function layerMask(string $quantised, array $colours, ?string $transparencyMask, bool $clean, string $output): void
+    {
+        $args = ['png:'.$quantised];
+        foreach ($colours as $hex) {
+            array_push($args, '-transparent', $this->hex($hex));
+        }
+        array_push($args, '-alpha', 'extract');
+        if ($transparencyMask !== null) {
+            array_push($args, 'png:'.$transparencyMask, '-compose', 'Lighten', '-composite');
+        }
+        if ($clean) {
+            array_push($args, '-statistic', 'Mode', '3x3');
+        }
+        // 8-bit PGM: Potrace thresholds it at 50 %, and it is far quicker to write than 1-bit PBM.
+        array_push($args, '-depth', '8', 'pgm:'.$output);
+        $this->magick($args);
+        if (! is_file($output) || filesize($output) < 8) {
+            throw PicToSvgException::conversionFailed();
+        }
+    }
+
+    /** Operations that reduce an image to its one-pixel border, for finding the background colour. */
+    public function borderOperations(): array
+    {
+        return [
+            '(', '-clone', '0', '-gravity', 'North', '-crop', 'x1+0+0', '+repage', ')',
+            '(', '-clone', '0', '-gravity', 'South', '-crop', 'x1+0+0', '+repage', ')',
+            '(', '-clone', '0', '-gravity', 'West', '-crop', '1x+0+0', '+repage', '-rotate', '90', ')',
+            '(', '-clone', '0', '-gravity', 'East', '-crop', '1x+0+0', '+repage', '-rotate', '90', ')',
+            '-delete', '0', '+append',
+        ];
+    }
+
+    private function hex(string $hex): string
+    {
+        if (preg_match('/\A#[0-9a-f]{6}\z/', $hex) !== 1) {
+            throw PicToSvgException::conversionFailed();
+        }
+
+        return $hex;
+    }
+
+    /**
      * The picture centred on a white canvas of exactly $width × $height (nothing is cropped).
      * Returns the PNG and the box the picture occupies, so the padding can be removed again.
      *

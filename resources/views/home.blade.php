@@ -15,6 +15,7 @@
         'engrave' => ['Engrave', 'Clean black-and-white artwork with filled regions'],
         'outline' => ['Outline Cut', 'Closed contours for laser/CNC cutting'],
         'lineart' => ['Line Art', 'Traces black line artwork; lines are traced as outlined shapes, not single-stroke centerlines'],
+        'color' => ['Color', 'Keeps the picture’s solid colors as separate colored shapes'],
     ];
 
     // Sliders shown by default.
@@ -125,6 +126,27 @@
                     <div class="form-text" id="hint-{{ $key }}">{{ $hint }}</div>
                 </div>
             @endforeach
+        </div>
+
+        <div class="color-options d-none mb-3" id="color-options">
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-5 col-md-4">
+                    <label for="set-colors" class="form-label mb-1">Number of colors</label>
+                    <select class="form-select" id="set-colors" aria-describedby="hint-colors">
+                        <option value="" selected>Automatic</option>
+                        @foreach (range(2, 16) as $n)
+                            <option value="{{ $n }}">Up to {{ $n }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-sm-7 col-md-8">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="color-remove-bg">
+                        <label class="form-check-label" for="color-remove-bg">Leave out the background color</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-text" id="hint-colors">Best for logos, clip art and drawings with flat colors. Each color becomes its own group of shapes in the SVG, in the same color as the picture. Photos and gradients convert only approximately.</div>
         </div>
 
         <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
@@ -293,5 +315,5 @@
 @endsection
 
 @push('scripts')
-    <script src="/js/pictosvg.js"></script>
+    <script src="/js/pictosvg.js?v={{ @filemtime(public_path('js/pictosvg.js')) }}"></script>
 @endpush

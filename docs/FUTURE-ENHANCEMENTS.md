@@ -78,3 +78,9 @@ that matters.
 - A pinned Pint run.
 - A regular fixture check that compares node and path counts against the table in
   [SVG-OPTIMIZATION.md](SVG-OPTIMIZATION.md) §3.
+
+## Color preset follow-ups
+
+- Cache the quantised image so slider changes do not repeat the color separation.
+- Optional non-overlapping ("cut-out") layers for inlay work.
+- Better handling of gradients (posterisation controls) and a real VTracer comparison.

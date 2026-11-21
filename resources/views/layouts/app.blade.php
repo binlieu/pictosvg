@@ -8,7 +8,7 @@
     <meta name="description" content="Convert JPG, PNG and WebP pictures into clean, physically sized SVG vector files for laser engraving and CNC carving.">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/pictosvg.css">
+    <link rel="stylesheet" href="/css/pictosvg.css?v={{ @filemtime(public_path('css/pictosvg.css')) }}">
 </head>
 <body>
     @yield('content')

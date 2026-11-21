@@ -7,7 +7,7 @@ Date: 2026-11-21
 The MVP is implemented: upload, validate, prepare, trace with Potrace, optimise, preview, export
 a physically sized SVG, and download. No database, accounts or AI provider are used.
 
-Test status: **62 tests pass** (`php artisan test`), as reported for this milestone. The count
+Test status: **71 tests pass** (`php artisan test`), as reported for this milestone. The count
 was confirmed by a static count of the test methods. The suite was not re-run for this documentation pass.
 
 Verification:

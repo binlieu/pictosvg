@@ -70,8 +70,11 @@
         function auto(key) {
             return $('adv-' + key + '-auto').checked ? null : Number($('adv-' + key).value);
         }
+        var preset = document.querySelector('input[name="preset"]:checked').value;
+        var isColor = preset === 'color';
         return {
-            preset: document.querySelector('input[name="preset"]:checked').value,
+            preset: preset,
+            colors: isColor && $('set-colors').value !== '' ? Number($('set-colors').value) : null,
             detail: Number($('set-detail').value),
             smoothing: Number($('set-smoothing').value),
             noise: Number($('set-noise').value),
@@ -84,8 +87,13 @@
             speck: auto('speck'),
             corners: auto('corners'),
             outline_only: $('adv-outline-only').checked,
-            transparent_background: $('adv-transparent').checked
+            transparent_background: isColor ? $('color-remove-bg').checked : $('adv-transparent').checked
         };
+    }
+
+    function syncColorOptions() {
+        var on = document.querySelector('input[name="preset"]:checked').value === 'color';
+        show($('color-options'), on);
     }
 
     function resetSettings() {
@@ -105,6 +113,9 @@
         $('adv-invert').checked = false;
         $('adv-outline-only').checked = DEF.preset === 'outline';
         $('adv-transparent').checked = true;
+        $('set-colors').value = '';
+        $('color-remove-bg').checked = false;
+        syncColorOptions();
         refreshOutputs();
     }
 
@@ -343,7 +354,7 @@
         if (old) setTimeout(function () { URL.revokeObjectURL(old); }, 0);
 
         var s = data.stats || {};
-        setText('stat-paths', s.paths != null ? String(s.paths) : '-');
+        setText('stat-paths', s.paths != null ? String(s.paths) : '-' + (data.stats.colors && data.stats.colors.length ? ' in ' + data.stats.colors.length + (data.stats.colors.length === 1 ? ' color' : ' colors') : ''));
         if (s.nodes != null) {
             var txt = String(s.nodes);
             if (s.nodes_before != null && Number(s.nodes_before) > Number(s.nodes)) {
@@ -644,10 +655,13 @@
             r.addEventListener('change', function () {
                 // Outline Cut implies outline-only output; other presets clear it.
                 $('adv-outline-only').checked = r.value === 'outline';
+                syncColorOptions();
                 scheduleConvert();
             });
         });
         $('adv-outline-only').checked = DEF.preset === 'outline';
+        ['set-colors', 'color-remove-bg'].forEach(function (id) { $(id).addEventListener('change', scheduleConvert); });
+        syncColorOptions();
         $('btn-reset').addEventListener('click', function () { resetSettings(); scheduleConvert(); });
         $('btn-convert').addEventListener('click', function () { convert(true); });
         $('btn-ai').addEventListener('click', aiRedraw);
