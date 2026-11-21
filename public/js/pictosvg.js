@@ -354,7 +354,7 @@
         if (old) setTimeout(function () { URL.revokeObjectURL(old); }, 0);
 
         var s = data.stats || {};
-        setText('stat-paths', s.paths != null ? String(s.paths) : '-' + (data.stats.colors && data.stats.colors.length ? ' in ' + data.stats.colors.length + (data.stats.colors.length === 1 ? ' color' : ' colors') : ''));
+        setText('stat-paths', (s.paths != null ? String(s.paths) : '-') + (s.colors && s.colors.length ? ' in ' + s.colors.length + (s.colors.length === 1 ? ' color' : ' colors') : ''));
         if (s.nodes != null) {
             var txt = String(s.nodes);
             if (s.nodes_before != null && Number(s.nodes_before) > Number(s.nodes)) {
