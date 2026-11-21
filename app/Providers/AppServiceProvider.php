@@ -22,6 +22,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('pictosvg-upload', fn (Request $r) => Limit::perMinute(20)->by($r->ip()));
-        RateLimiter::for('pictosvg-convert', fn (Request $r) => Limit::perMinute(90)->by($r->ip()));
+        RateLimiter::for('pictosvg-convert', fn (Request $r) => Limit::perMinute(180)->by($r->ip()));
     }
 }

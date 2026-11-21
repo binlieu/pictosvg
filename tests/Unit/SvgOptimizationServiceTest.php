@@ -63,6 +63,20 @@ class SvgOptimizationServiceTest extends TestCase
         $this->assertSame(1, $result['removed_duplicates']);
     }
 
+    public function test_long_straight_runs_are_simplified_in_bounded_time(): void
+    {
+        $d = 'M0 0';
+        for ($i = 1; $i <= 20000; $i++) {
+            $d .= ' L'.$i.' '.(($i % 2) * 0.1);
+        }
+        $d .= ' L20000 50 L0 50 Z';
+        $start = microtime(true);
+        $out = $this->opt([PathGeometry::parse($d)], 1.0)['shapes'];
+        $this->assertLessThan(2.0, microtime(true) - $start);
+        $this->assertLessThan(500, PathGeometry::nodeCount($out[0][0]));
+        $this->assertEqualsWithDelta(1_000_000, abs(PathGeometry::signedArea($out[0][0])), 2000);
+    }
+
     public function test_zero_tolerance_changes_nothing(): void
     {
         $shape = PathGeometry::parse('M0 0 L50 0 L100 0 L100 100 Z');

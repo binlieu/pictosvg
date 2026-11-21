@@ -133,6 +133,9 @@ class ConversionTest extends TestCase
         $this->assertLessThanOrEqual($low['stats']['nodes'], $high['stats']['nodes']);
         // "PicToSVG" headline alone has 8 glyphs; the whole fixture has well over 100 glyph shapes.
         $this->assertGreaterThan(100, $high['stats']['paths']);
+        // Default settings keep the dots of the 18 px small print (i, j, colon): visual review
+        // counted 110 glyph shapes; losing the small dots drops this to 105.
+        $this->assertGreaterThanOrEqual(109, $this->convert($upload)['stats']['paths']);
         // letter counters (holes) survive: far more contours than shapes
         $subpaths = array_sum(array_map('count', $this->shapes($high['svg'])));
         $this->assertGreaterThan($high['stats']['paths'] + 20, $subpaths);
@@ -224,6 +227,8 @@ class ConversionTest extends TestCase
         $this->postJson('/api/svg/convert', ['id' => $a['id'], 'token' => $a['token'], 'preset' => 'gcode'])->assertStatus(422);
         $this->postJson('/api/svg/convert', ['id' => $a['id'], 'token' => $a['token'], 'detail' => 99])->assertStatus(422);
         $this->postJson('/api/svg/convert', ['id' => $a['id'], 'token' => $a['token'], 'width' => -5])->assertStatus(422);
+        $this->postJson('/api/svg/convert', ['id' => $a['id'], 'token' => $a['token'], 'width' => 0.00001])->assertStatus(422);
+        $this->postJson('/api/svg/convert', ['id' => $a['id']])->assertStatus(422);
         $this->postJson('/api/svg/convert', ['id' => $a['id'], 'token' => $a['token'], 'unit' => 'px; rm -rf'])->assertStatus(422);
     }
 
@@ -234,6 +239,15 @@ class ConversionTest extends TestCase
         $this->postJson('/api/svg/optimize', $body)->assertStatus(409)->assertJsonPath('code', 'conversion_failed');
         $this->convert($upload);
         $this->postJson('/api/svg/optimize', $body + ['smoothing' => 3])->assertOk()->assertJsonPath('stats.unit', 'mm');
+    }
+
+    public function test_overly_complex_traces_are_refused_before_they_exhaust_memory(): void
+    {
+        $upload = $this->upload('text.png');
+        config(['pictosvg.max_trace_bytes' => 2000]);
+        $this->postJson('/api/svg/convert', ['id' => $upload['id'], 'token' => $upload['token']])
+            ->assertStatus(422)->assertJsonPath('code', 'conversion_failed');
+        $this->assertSame([], glob($this->storageRoot.'/'.$upload['id'].'/tmp-*'), 'no temp files left behind');
     }
 
     public function test_missing_tracer_binary_is_reported_without_leaking_paths(): void

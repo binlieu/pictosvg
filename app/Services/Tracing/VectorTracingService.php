@@ -49,6 +49,12 @@ class VectorTracingService
         }
 
         try {
+            // Parsing costs roughly 50× the file size in PHP memory; refuse early instead of
+            // letting a very noisy image exhaust the worker.
+            if ((int) @filesize($workFile) > (int) config('pictosvg.max_trace_bytes', 6 * 1024 * 1024)) {
+                throw PicToSvgException::conversionFailed('This picture is too complex to convert at these settings. Try lowering Detail or raising Noise Removal.');
+            }
+
             return $this->readPotraceSvg((string) @file_get_contents($workFile));
         } finally {
             @unlink($workFile);
@@ -58,7 +64,7 @@ class VectorTracingService
     /** @return list<list<array>> */
     public function readPotraceSvg(string $svg): array
     {
-        if ($svg === '' || strlen($svg) > 64 * 1024 * 1024) {
+        if ($svg === '') {
             throw PicToSvgException::conversionFailed('The result is too complex. Try lowering Detail or raising Noise Removal.');
         }
         // Potrace emits a DOCTYPE with an external DTD reference. It is our own tool's

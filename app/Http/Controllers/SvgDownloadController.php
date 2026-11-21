@@ -16,7 +16,7 @@ class SvgDownloadController extends Controller
         $dir = $store->authorize($temporaryId, $request->query('token'));
         $request->validate([
             'version' => ['sometimes', 'string', 'regex:/\A[a-f0-9]{12}\z/'],
-            'width' => ['sometimes', 'numeric', 'gt:0', 'max:100000'],
+            'width' => ['sometimes', 'numeric', 'min:0.01', 'max:100000'],
             'unit' => ['required_with:width', 'in:mm,in'],
         ]);
 
@@ -43,6 +43,7 @@ class SvgDownloadController extends Controller
             'X-Content-Type-Options' => 'nosniff',
             'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
             'Cache-Control' => 'private, no-store',
+            'Referrer-Policy' => 'no-referrer',
         ]);
     }
 }

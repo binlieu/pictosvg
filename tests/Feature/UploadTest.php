@@ -42,12 +42,27 @@ class UploadTest extends TestCase
         $this->assertSame([200, 400], [$json['width'], $json['height']]);
     }
 
+    public function test_png_orientation_metadata_is_honoured_like_jpeg(): void
+    {
+        // Insert an eXIf chunk (Orientation = 6) after IHDR of the 600x400 logo.
+        $png = file_get_contents($this->fixture('logo.png'));
+        $tiff = "MM\x00\x2a".pack('N', 8).pack('n', 1).pack('nnNnn', 0x0112, 3, 1, 6, 0).pack('N', 0);
+        $chunk = pack('N', strlen($tiff)).'eXIf'.$tiff.pack('N', crc32('eXIf'.$tiff));
+        $response = $this->postContents(substr($png, 0, 33).$chunk.substr($png, 33), 'rotated.png');
+        $response->assertStatus(201);
+        $this->assertSame([400, 600], [$response->json('width'), $response->json('height')]);
+
+        $result = $this->postJson('/api/svg/convert', ['id' => $response->json('id'), 'token' => $response->json('token')])->assertOk()->json();
+        $this->assertEqualsWithDelta(400 / 600, $result['stats']['pixel_width'] / $result['stats']['pixel_height'], 0.01, 'no stretching');
+        $this->assertStringContainsString('width="150mm" height="225mm"', $result['svg']);
+    }
+
     public function test_rejects_non_images_regardless_of_extension(): void
     {
         $cases = [
             'text renamed to png' => ['hello world', 'fake.png'],
             'php with png extension' => ["<?php system(\$_GET['c']); ?>", 'shell.png'],
-            'php with gif magic bytes' => ["GIF89a<?php echo 1; ?>", 'shell.jpg'],
+            'php with gif magic bytes' => ['GIF89a<?php echo 1; ?>', 'shell.jpg'],
             'svg with script' => ['<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', 'x.svg'],
             'truncated png header' => ["\x89PNG\r\n\x1a\n", 'broken.png'],
             'empty' => ['', 'empty.png'],

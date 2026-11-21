@@ -2,6 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8">
+    <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'PicToSVG - Turn Pictures into Precision Vectors')</title>
     <meta name="description" content="Convert JPG, PNG and WebP pictures into clean, physically sized SVG vector files for laser engraving and CNC carving.">

@@ -114,7 +114,8 @@ class SvgOptimizationService
             while ($i < $count) {
                 // extend as far as all intermediate points stay on the chord
                 $j = $i;
-                while ($j + 1 < $count) {
+                // The look-ahead window is capped so a pathological straight run stays linear-time.
+                while ($j + 1 < $count && $j - $i < 48) {
                     $ok = true;
                     for ($k = $i; $k <= $j; $k++) {
                         if (! $this->between($from, $run[$j + 1], $run[$k], $tolerance)) {

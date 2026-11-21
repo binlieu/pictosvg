@@ -87,7 +87,8 @@ final class ConversionSettings
 
     /**
      * Speck area threshold in working pixels² (Potrace --turdsize and post-trace clean-up).
-     * Noise Removal n removes specks up to n²/5 source pixels² (5 → 5 px², 10 → 20 px²),
+     * Noise Removal n removes specks up to n²/8 source pixels² (5 → 3 px², 10 → 12.5 px²;
+     * the default deliberately keeps 2x2 px marks such as the dots of small letters),
      * with a floor relative to the working size so large photos are cleaned too.
      */
     public function speckArea(float $scale, int $workingLongSide): int
@@ -95,8 +96,9 @@ final class ConversionSettings
         if ($this->speck !== null) {
             return (int) round($this->speck * $scale * $scale);
         }
-        $fromSource = $this->noise ** 2 / 5 * $scale * $scale;
-        $fromWorking = $this->noise ** 2 * 0.25 * ($workingLongSide / 1000) ** 2;
+        $fromSource = $this->noise ** 2 / 8 * $scale * $scale;
+        // The floor only applies to images that were reduced (large photos/scans).
+        $fromWorking = $scale < 1 ? $this->noise ** 2 * 0.25 * ($workingLongSide / 1000) ** 2 : 0.0;
         $factor = match ($this->preset) {
             'outline' => 2.0,    // stray islands are costly when cutting
             'lineart' => 0.5,    // keep dots, hatching, fine marks

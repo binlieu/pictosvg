@@ -31,8 +31,8 @@ class SvgExportService
             $svg .= sprintf('<rect width="%d" height="%d" fill="#ffffff"/>', $w, $h)."\n";
         }
         if ($o['outline']) {
-            // Hairline that stays ~0.1% of the drawing width; laser/CNC software ignores stroke width.
-            $stroke = rtrim(rtrim(number_format(max($w, $h) / 1000, 2, '.', ''), '0'), '.') ?: '1';
+            // Hairline that stays ~0.17% of the drawing size; laser/CNC software ignores stroke width.
+            $stroke = rtrim(rtrim(number_format(max($w, $h) / 600, 2, '.', ''), '0'), '.') ?: '1';
             $svg .= sprintf('<g fill="none" stroke="#000000" stroke-width="%s" stroke-linejoin="round">', $stroke)."\n";
         } else {
             $svg .= '<g fill="#000000" fill-rule="nonzero" stroke="none">'."\n";

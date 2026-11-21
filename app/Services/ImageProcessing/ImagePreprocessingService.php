@@ -45,12 +45,12 @@ class ImagePreprocessingService
                 number_format($maxPixels / 1e6, 0)
             ));
         }
-        // EXIF orientations 5–8 rotate by 90°, swapping the visible width and height.
-        if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
-            $exif = @exif_read_data($file);
-            if (is_array($exif) && in_array((int) ($exif['Orientation'] ?? 1), [5, 6, 7, 8], true)) {
-                [$width, $height] = [$height, $width];
-            }
+        // Orientation metadata (EXIF in JPEG, PNG and WebP) can rotate the picture by 90°,
+        // swapping the visible width and height. Ask the same tool that will apply
+        // -auto-orient, so the reported size always matches what is traced.
+        $orientation = trim($this->magick(['-ping', $allowed[$mime].':'.$file.'[0]', '-format', '%[orientation]', 'info:']));
+        if (in_array($orientation, ['LeftTop', 'RightTop', 'RightBottom', 'LeftBottom'], true)) {
+            [$width, $height] = [$height, $width];
         }
 
         return ['mime' => $mime, 'format' => $allowed[$mime], 'width' => $width, 'height' => $height];

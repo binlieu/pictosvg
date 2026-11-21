@@ -21,7 +21,7 @@ class ConvertRequest extends FormRequest
             'smoothing' => ['sometimes', 'integer', 'between:0,10'],
             'noise' => ['sometimes', 'integer', 'between:0,10'],
             'smooth_curves' => ['sometimes', 'boolean'],
-            'width' => ['sometimes', 'numeric', 'gt:0', 'max:100000'],
+            'width' => ['sometimes', 'numeric', 'min:0.01', 'max:100000'],
             'unit' => ['sometimes', 'in:mm,in'],
             'threshold' => ['sometimes', 'nullable', 'integer', 'between:1,99'],
             'contrast' => ['sometimes', 'integer', 'between:-50,50'],

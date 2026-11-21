@@ -60,6 +60,7 @@ class DownloadAndLifecycleTest extends TestCase
         $this->getJson($this->url($a, ['version' => '../meta.json']))->assertStatus(422);
         $this->getJson($this->url($a, ['version' => str_repeat('0', 12)]))->assertStatus(404);
         $this->getJson($this->url($a, ['width' => 0, 'unit' => 'mm']))->assertStatus(422);
+        $this->getJson($this->url($a, ['width' => 0.00001, 'unit' => 'mm']))->assertStatus(422);
         $this->getJson($this->url($a, ['width' => 5, 'unit' => 'px']))->assertStatus(422);
     }
 

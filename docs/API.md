@@ -2,8 +2,10 @@
 
 All endpoints are stateless JSON endpoints under `/api`. There are no accounts and no database.
 A conversion is identified by an opaque `id` (32 hex chars) plus a `token` (HMAC of the id,
-64 hex chars) returned by the upload endpoint. Every later call must send both; a wrong or
-missing token yields `403`, an expired/unknown id yields `404`.
+64 hex chars) returned by the upload endpoint. Every later call must send both. A wrong token
+yields `403`; a missing or malformed `id`/`token` in a JSON body yields `422`; an expired or
+unknown id yields `404`. A result `version` that has been pruned (only the 5 newest are kept)
+also yields `404` with code `expired`.
 
 Errors always have the shape:
 
@@ -50,7 +52,7 @@ JSON body. Only `id` and `token` are required; everything else has a default.
 | `smoothing` | int 0–10 | 8 | |
 | `noise` | int 0–10 | 5 | |
 | `smooth_curves` | bool | true | "Optimize Smooth Curves" |
-| `width` | number > 0 | 150 | physical output width |
+| `width` | number ≥ 0.01 | 150 | physical output width |
 | `unit` | `mm` \| `in` | `mm` | |
 | `threshold` | int 1–99 \| null | null = automatic | Advanced |
 | `contrast` | int -50–50 | 0 | Advanced |

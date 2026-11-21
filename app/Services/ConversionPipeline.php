@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\PicToSvgException;
 use App\Services\ImageProcessing\ImagePreprocessingService;
+use App\Services\Svg\PathGeometry;
 use App\Services\Svg\SvgExportService;
 use App\Services\Svg\SvgOptimizationService;
 use App\Services\Svg\SvgValidationService;
@@ -54,8 +55,11 @@ class ConversionPipeline
         ];
         $bitmap = $dir.'/bitmap-'.$s->bitmapKey($params).'.pbm';
         if (! is_file($bitmap)) {
+            // Only remove bitmaps no concurrent request can still be tracing.
             foreach (glob($dir.'/bitmap-*.pbm') ?: [] as $old) {
-                @unlink($old);
+                if (time() - (int) @filemtime($old) > 120) {
+                    @unlink($old);
+                }
             }
             $tmp = $dir.'/tmp-'.bin2hex(random_bytes(6)).'.pbm';
             try {
@@ -87,7 +91,13 @@ class ConversionPipeline
             'outline' => $s->outline,
             'white_background' => ! $s->transparentBackground,
         ];
-        $rawStats = $this->validator->validate($this->export->build($raw, $exportOptions));
+        // Measured node count of the unoptimised trace (same counting rule as the validator).
+        $rawNodes = 0;
+        foreach ($raw as $shape) {
+            foreach ($shape as $subpath) {
+                $rawNodes += PathGeometry::nodeCount($subpath);
+            }
+        }
 
         // --- 3. Optimise (separate from tracing; skipped when smooth curves is off) -----
         if ($s->smoothCurves) {
@@ -102,6 +112,7 @@ class ConversionPipeline
         } else {
             $shapes = $raw;
         }
+        unset($raw);
 
         // --- 4. Export + validate the exact bytes that will be served -------------------
         $svg = $this->export->build($shapes, $exportOptions);
@@ -135,7 +146,7 @@ class ConversionPipeline
             'stats' => [
                 'paths' => $stats['paths'],
                 'nodes' => $stats['nodes'],
-                'nodes_before' => $rawStats['nodes'],
+                'nodes_before' => $s->smoothCurves ? $rawNodes : $stats['nodes'],
                 'width' => $stats['width'],
                 'height' => $stats['height'],
                 'unit' => $stats['unit'],
