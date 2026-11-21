@@ -1,0 +1,46 @@
+# Change Log
+
+## 2026-11-21: MVP
+
+Scope: first complete vertical slice from upload to downloaded, physically sized SVG.
+
+Added:
+- Laravel 13 application with Blade page, one JavaScript file and one stylesheet (dark theme, red
+  accents, responsive layout).
+- Upload intake with content validation, a 20 MB byte limit and a 40 M pixel limit.
+- ImageMagick preparation: orientation, transparency handling, grey, working size, contrast, blur, invert and
+  threshold, with resource limits.
+- Potrace 1.16 tracing with raw and curve-fitted passes, with three presets: Engrave, Outline Cut and Line Art.
+- Post-trace optimiser: speck and small hole removal, flat-curve straightening, straight-run merge and exact
+  duplicate removal.
+- SVG export in millimetres or inches with a correct viewBox and aspect ratio, and a validator that
+  allow-lists elements, attributes and values.
+- Download endpoint with token authorisation, safe headers and re-sizing that rewrites only width and height.
+- Private temporary storage with opaque ids, HMAC tokens, 60-minute expiry, scheduled and sweep-based cleanup,
+  and per-IP rate limits.
+- AI redraw gating (configuration, status, disabled button, 503 endpoint). No provider.
+- Test suite of 54 tests (19 unit, 35 feature) using real conversions and synthetic fixtures.
+- Documentation set: product spec, architecture, features, image processing, SVG optimisation, installation,
+  testing, future enhancements, four ADRs, eight feature specs, status, handoff, known issues and this log.
+
+Verification:
+- Automated Tested: 54 tests reported passing.
+- Visual Reviewed: fixture outputs (developer agent).
+- Importer Verified: Not Verified.
+- Machine Verified: Not Verified.
+- Ubuntu deployment: Not Verified.
+
+Known issues of note: see [16-known-issues.md](16-known-issues.md), especially KI-01 (EXIF orientation depends on the
+`exif` extension).
+
+## 2026-11-21 — Independent review fixes (SYS-001, PRE-001, EXPORT-001)
+
+- Orientation metadata is honoured for PNG and WebP as well as JPEG (was: JPEG only; rotated PNGs were stretched).
+- Raw tracer output over 6 MB is refused before parsing; the raw node count is measured directly instead of re-exporting and re-validating the raw trace.
+- Prepared-bitmap cache files newer than 120 s are no longer deleted by a concurrent conversion.
+- Width must be at least 0.01 on convert and download (tiny widths previously produced a 500).
+- Local reverse proxy is trusted so rate limits use the real client IP; conversion limit raised to 180/min.
+- Straight-run merging uses a bounded look-ahead window (linear time on pathological input).
+- Download response and page send `Referrer-Policy: no-referrer`; `.env.example` ships `APP_DEBUG=false`.
+- Tests: 54 passing (19 unit, 35 feature).
+- Public repository created: https://github.com/binlieu/pictosvg

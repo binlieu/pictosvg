@@ -37,7 +37,7 @@ brew install php composer imagemagick potrace
 ```
 
 ```bash
-git clone <this-repo-url> pictosvg && cd pictosvg
+git clone https://github.com/binlieu/pictosvg.git && cd pictosvg
 ```
 
 ```bash
