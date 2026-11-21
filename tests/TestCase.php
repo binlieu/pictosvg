@@ -17,7 +17,8 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         $this->storageRoot = sys_get_temp_dir().'/pictosvg-tests-'.bin2hex(random_bytes(6));
-        config(['pictosvg.storage_path' => $this->storageRoot]);
+        // No test may reach the real AI service, whatever .env or the shell contains.
+        config(['pictosvg.storage_path' => $this->storageRoot, 'pictosvg.ai.anthropic_api_key' => null, 'pictosvg.ai.base_url' => 'http://127.0.0.1:9']);
         $this->withoutMiddleware(ThrottleRequests::class);
     }
 

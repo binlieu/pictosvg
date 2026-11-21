@@ -16,7 +16,7 @@ conversion controls. It does not generate or alter geometry.
 - `ClaudeSettingsAdvisor` (official `anthropic-ai/sdk`) sends both images with a system prompt
   describing each control, requests JSON via `output_config.format` (JSON schema), model
   `PICTOSVG_AI_MODEL` (default `claude-opus-5-5`), effort `medium`, server-side refusal fallback
-  (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`), timeout 90 s, one retry.
+  (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`), timeout 45 s, no automatic retry. The API host is pinned by `PICTOSVG_AI_BASE_URL` (default `https://api.anthropic.com`), so an ambient `ANTHROPIC_BASE_URL` cannot redirect the key or the picture.
 - The reply is type-checked and clamped (`AiSuggestService::sanitise`): unknown presets, out-of-range
   numbers, wrong types and extra fields cannot reach the pipeline. The explanation is stripped of
   markup and cut to 400 characters; the UI renders it with `textContent`.

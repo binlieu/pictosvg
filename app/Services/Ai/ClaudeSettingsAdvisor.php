@@ -69,7 +69,10 @@ TXT;
         ];
 
         try {
-            $client = new Client(apiKey: (string) config('pictosvg.ai.anthropic_api_key'));
+            $client = new Client(
+                apiKey: (string) config('pictosvg.ai.anthropic_api_key'),
+                baseUrl: (string) config('pictosvg.ai.base_url'),
+            );
             // Thinking is adaptive by default on this model. Server-side fallback lets the API
             // retry on its default substitute model if the requested model declines.
             $message = $client->beta->messages->create(
@@ -89,7 +92,7 @@ TXT;
                 outputConfig: ['effort' => 'medium', 'format' => ['type' => 'json_schema', 'schema' => self::SCHEMA]],
                 fallbacks: 'default',
                 betas: ['server-side-fallback-2026-07-01'],
-                requestOptions: ['timeout' => (float) config('pictosvg.ai.timeout', 90), 'maxRetries' => 1],
+                requestOptions: ['timeout' => (float) config('pictosvg.ai.timeout', 45), 'maxRetries' => 0],
             );
         } catch (AuthenticationException|PermissionDeniedException $e) {
             Log::error('PicToSVG AI: the Anthropic API key was rejected', ['status' => $e->status ?? null]);

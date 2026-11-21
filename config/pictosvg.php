@@ -44,6 +44,10 @@ return [
         // Enabled only when a key is set. The key never leaves the server.
         'anthropic_api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('PICTOSVG_AI_MODEL', 'claude-opus-5-5'),
-        'timeout' => (int) env('PICTOSVG_AI_TIMEOUT', 90),
+        // Pinned explicitly so an ambient ANTHROPIC_BASE_URL in the server's environment can
+        // never redirect the key and the picture to another host.
+        'base_url' => env('PICTOSVG_AI_BASE_URL', 'https://api.anthropic.com'),
+        // Kept below typical proxy read timeouts (Nginx default 60 s); no automatic retry.
+        'timeout' => (int) env('PICTOSVG_AI_TIMEOUT', 45),
     ],
 ];
