@@ -28,14 +28,14 @@ Ordered by the next safe step in [docs/15-agent-handoff.md](../docs/15-agent-han
 
 | # | Task | Feature IDs | Blocking? | Notes |
 |---|---|---|---|---|
-| 1 | Fix or guard EXIF-dependent orientation (KI-01) | UPLOAD-001, PRE-001 | Yes, for phone photos on hosts without `exif` | Add a test for rotated input |
+| 1 | Add a WebP orientation test (orientation is now read by ImageMagick; KI-01 resolved) | UPLOAD-001, PRE-001 | No | PNG case is covered by `test_png_orientation_metadata_is_honoured_like_jpeg` |
 | 2 | Correct fixture comment and speck formula agreement (KI-03) | PRE-001 | No | Measure first |
 | 3 | Importer verification in LightBurn, VCarve/Aspire and Inkscape | EXPORT-001, TRACE-001 | Yes, before any Importer Verified claim | Needs the applications |
 | 4 | Real-photograph fixture | TRACE-001 | No | Licence must be clear |
 | 5 | Ubuntu, Nginx and PHP-FPM trial | SYS-001 | Yes, before deployment | Includes ImageMagick 6 question |
 | 6 | Per-id lock for convert and optimise (KI-08) | SYS-001 | No | Add concurrent-request test |
 | 7 | Intersection detection for cut mode | OPT-001, TRACE-001 | No | Spec first |
-| 8 | `scripts/check.sh` quality gate and Pint run | all | No | Required by project guidance |
+| 8 | Run `scripts/check.sh`, settle its `README.md` docs check, run Pint | all | No | Script exists; not run in this milestone |
 | 9 | AI provider adapter | AI-001 | No | Needs a decision and a new ADR |
 | 10 | Browser workflow tests | VIEW-001 | No | Keep to the three-step flow |
 | 11 | Centerline tracing (separate feature) | TRACE-001 | No | Do not mislabel outline tracing |

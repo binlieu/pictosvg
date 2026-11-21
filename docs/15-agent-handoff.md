@@ -31,10 +31,9 @@ Date: 2026-11-21. Read this with [14-current-status.md](14-current-status.md) an
 
 Each task should start with a short spec and a failing test where the task changes behaviour.
 
-1. **Fix or guard KI-01 (EXIF).** Either read orientation through ImageMagick and derive the dimensions
-   from the same source, or add a deployment check. Add a test that rotated input is traced upright
-   with and without the `exif` extension, using a skip when the extension is missing. Update
-   `docs/16-known-issues.md` and `docs/features/UPLOAD-001-image-intake.md`.
+1. **KI-01 is resolved.** Orientation is read by ImageMagick for JPEG, PNG and WebP. Keep
+   `UploadTest::test_png_orientation_metadata_is_honoured_like_jpeg` passing, and add a WebP orientation
+   test, which KI-01 says is still missing.
 2. **Correct the fixture comment (KI-03).** Measure the Noise Removal level at which the 3 × 3 dot disappears,
    then update `scripts/make-fixtures.sh` and the test comment.
 3. **Importer verification.** Open a fixed set of exports (logo, transparent logo, text, line drawing,
@@ -50,8 +49,8 @@ Each task should start with a short spec and a failing test where the task chang
    directory. Add a test with two overlapping requests.
 7. **Intersection detection for cut mode.** Write a spec first. Decide the algorithm and its tolerance. Add
    tests using a shape with a deliberate self-intersection. Warn only; do not modify geometry.
-8. **Quality gate.** Create `scripts/check.sh` that runs Pint in test mode, the test suite, and the fixture
-   count comparison. Run Pint once and record its result.
+8. **Quality gate.** `scripts/check.sh` exists. Settle its documentation step (it expects `README.md`, which
+   the task rules forbid unless asked for), then run the script and record the result, including Pint.
 9. **AI provider adapter (only after a decision).** Choose one provider, write an ADR that supersedes
    ADR 0004, document privacy and retention, and add the adapter with tests.
 

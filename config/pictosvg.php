@@ -20,7 +20,7 @@ return [
     'magick_memory_limit' => env('PICTOSVG_MAGICK_MEMORY', '1GiB'),
     'magick_disk_limit' => env('PICTOSVG_MAGICK_DISK', '2GiB'),
     'max_working_side' => 3600,
-    'max_trace_bytes' => 6 * 1024 * 1024,   // raw tracer output accepted for parsing
+    'max_trace_bytes' => 3 * 1024 * 1024,   // raw tracer output accepted for parsing
     'max_svg_bytes' => 15 * 1024 * 1024,
 
     'defaults' => [

@@ -108,7 +108,7 @@ Status is about the code, not about physical quality. See [FEATURES.md](FEATURES
 | Step | Requirement | Status |
 |---|---|---|
 | 1 | Validate upload | Implemented (content, size, pixels) |
-| 2 | Orientation and transparency | Implemented. EXIF correction needs the `exif` extension (see known issues). |
+| 2 | Orientation and transparency | Implemented. Orientation metadata is read by ImageMagick for JPEG, PNG and WebP (KI-01, resolved). |
 | 3 | Working format | Implemented (1-bit PBM) |
 | 4 | Grayscale or colour normalisation | Partially: grayscale only. No colour tracing. |
 | 5 | Contrast | Implemented (`-auto-level` and Image contrast) |
@@ -273,7 +273,7 @@ Preset guidance:
 | Fixture: complex illustration | Test | Implemented (`illustration.png`) |
 | Visual check of smoothing | Required | Visual Reviewed (developer agent) only |
 | Browser workflow checks | Where they add value | Not implemented |
-| `scripts/check.sh` quality gate | Required by project guidance | Not implemented |
+| `scripts/check.sh` quality gate | Required by project guidance | Present. Not run for this milestone. Its docs step expects `README.md`, which is absent. |
 | Pint formatting check | Where installed | Not run |
 | Real-import checks (LightBurn, VCarve/Aspire, Inkscape) | Where possible | Not verified |
 
@@ -314,7 +314,7 @@ Preset guidance:
 
 | Item | Status |
 |---|---|
-| `scripts/check.sh` quality gate | Not implemented |
+| `scripts/check.sh` quality gate | Present; not run for this milestone |
 | `AGENTS.md` startup contract | Not present |
 | `AI/TASK-BREAKDOWN.md` and `AI/reports/` | Written for this milestone |
 | Feature specs under `docs/features/` | Written for this milestone (eight) |

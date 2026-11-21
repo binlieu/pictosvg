@@ -58,7 +58,7 @@ FONT="${PICTOSVG_FIXTURE_FONT:-/System/Library/Fonts/Supplemental/Arial Bold.ttf
 # 8. WebP copy of the logo, and a noisy logo for speck clean-up tests.
 "$M" logo.png logo.webp
 "$M" logo.png -fill black -draw "point 30,30 point 31,30 point 580,20 rectangle 20,370 20,371 rectangle 570,350 572,352 point 300,390" noisy-logo.png
-#    (1px and 1x2 specks = noise at the default setting; the 3x3 dot needs Noise Removal 7+)
+#    (1px and 1x2 specks = noise at the default setting; the 3x3 dot needs Noise Removal 9+)
 
 # 9. JPEG stored landscape (400x200) with EXIF Orientation=6, i.e. displayed as 200x400.
 #    ImageMagick does not write an EXIF block for plain JPEGs, so a minimal one is inserted.

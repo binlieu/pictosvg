@@ -50,7 +50,7 @@ Verification:
 | Colour tracing | Not implemented |
 | Intersection detection | Not implemented |
 | AI provider adapter | Not implemented |
-| `scripts/check.sh` | Not implemented |
+| `scripts/check.sh` | Present; not run for this milestone. Its docs step expects `README.md`, which is absent. |
 | Ubuntu, Nginx and PHP-FPM instructions | Written, not tested |
 
 ## Measured on the fixtures

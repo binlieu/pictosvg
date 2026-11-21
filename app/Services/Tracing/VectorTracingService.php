@@ -51,7 +51,7 @@ class VectorTracingService
         try {
             // Parsing costs roughly 50× the file size in PHP memory; refuse early instead of
             // letting a very noisy image exhaust the worker.
-            if ((int) @filesize($workFile) > (int) config('pictosvg.max_trace_bytes', 6 * 1024 * 1024)) {
+            if ((int) @filesize($workFile) > (int) config('pictosvg.max_trace_bytes', 3 * 1024 * 1024)) {
                 throw PicToSvgException::conversionFailed('This picture is too complex to convert at these settings. Try lowering Detail or raising Noise Removal.');
             }
 

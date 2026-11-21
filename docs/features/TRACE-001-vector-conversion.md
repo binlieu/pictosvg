@@ -46,6 +46,7 @@ from post-trace optimisation (OPT-001) and from export (EXPORT-001).
   - `test_outline_cut_produces_only_closed_stroked_contours`
   - `test_line_art_traces_thin_strokes_and_says_it_is_not_centerline`
   - `test_photo_like_image_converts_to_an_approximate_vector`
+  - `test_overly_complex_traces_are_refused_before_they_exhaust_memory`
   - `test_missing_tracer_binary_is_reported_without_leaking_paths`
   - `test_optimize_endpoint_requires_a_previous_conversion`
 - `tests/Unit/PathGeometryTest.php` (6 methods) covers the parser used on Potrace output, including

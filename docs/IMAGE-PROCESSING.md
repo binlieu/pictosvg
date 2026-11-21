@@ -164,7 +164,7 @@ facade with an argument array and no shell.
 Bitmap cache key: the bitmap file name is `bitmap-<sha256 prefix>.pbm`, where the hash covers
 `lineart`, `detail`, `smoothing`, `threshold`, `contrast`, `invert` and the working size, blur,
 threshold and alpha-branch flag. Changing Noise Removal, tolerance, corners, speck size or output
-width does **not** re-run ImageMagick. Older bitmaps are deleted when a new one is written.
+width does **not** re-run ImageMagick. Bitmaps not modified for at least 120 seconds are deleted when a new one is written. Newer ones are kept in case a concurrent request is still tracing them.
 
 ## 4. Preset differences
 
@@ -216,6 +216,6 @@ in Advanced Settings."
   `min_area` check, not by a morphological filter.
 - Photographs are approximate. The `vehicle-photo.jpg` fixture is synthetic, and no real
   photograph has been tested.
-- EXIF orientation (5–8) is read only when PHP's `exif` extension is available. See
+- Orientation metadata (EXIF in JPEG, PNG and WebP) is read by ImageMagick, so PHP's `exif` extension is not needed. See
   `docs/16-known-issues.md`.
 - Potrace has no memory limit. Only the process timeout applies to it.

@@ -41,6 +41,7 @@ Details and tolerances are in [SVG-OPTIMIZATION.md](../SVG-OPTIMIZATION.md) §2.
   - `test_real_curves_stay_curves_and_flat_curves_become_lines`
   - `test_removes_tiny_specks_and_tiny_holes_but_preserves_real_holes`
   - `test_removes_exact_duplicate_contours_only`
+  - `test_long_straight_runs_are_simplified_in_bounded_time`
   - `test_zero_tolerance_changes_nothing`
 - `tests/Feature/ConversionTest.php`:
   - `test_optimisation_reduces_measured_nodes_without_changing_the_shape`
@@ -59,4 +60,4 @@ nodes raw).
 - No intersection detection.
 - Duplicate detection is exact, not geometric.
 - Precision is fixed at one decimal place in the controller path.
-- The optimiser runs on the traced geometry only. It does not re-fit curves.
+- The optimiser runs on the traced geometry only. It does not re-fit curves. The straight-run look-ahead is capped at 48 points.

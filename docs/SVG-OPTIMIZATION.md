@@ -45,7 +45,7 @@ chord. The stricter factor keeps real curves as curves.
 ### 2.3 Straight-run merging
 
 Consecutive line endpoints form a run. Greedily, a run is replaced by a longer straight segment as
-long as every skipped node lies within `tolerance` of the new segment and projects inside it.
+long as every skipped node lies within `tolerance` of the new segment and projects inside it. The look-ahead window is capped at 48 points per step, so a very long straight run is merged in bounded time.
 The closing edge of a closed subpath is made explicit first, so nodes on it can also merge.
 
 Sharp corners are kept because they lie far from the chord of any longer segment.
@@ -156,7 +156,7 @@ ratio, missing unit, no paths, not XML and arc command.
 ## 6. Limits
 
 - `max_svg_bytes` = 15 MB. A larger result fails with "too complex" (`conversion_failed`).
-- Raw Potrace output larger than 6 MB (`pictosvg.max_trace_bytes`) is refused before parsing, with a "too complex" message, so a very noisy image cannot exhaust PHP memory.
+- Raw Potrace output larger than 3 MB (`pictosvg.max_trace_bytes`) is refused before parsing, with a "too complex" message, so a very noisy image cannot exhaust PHP memory.
 - More than 1500 `<path>` elements adds a warning about approximate results.
 
 ## 7. What is not verified

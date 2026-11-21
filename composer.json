@@ -1,9 +1,12 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "binlieu/pictosvg",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "PicToSVG - image-to-SVG converter for laser engraving and CNC.",
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -21,9 +24,7 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
+            "App\\": "app/"
         }
     },
     "autoload-dev": {
@@ -35,14 +36,11 @@
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install --ignore-scripts",
-            "npm run build"
+            "@php artisan key:generate"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
+            "@php artisan serve"
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
@@ -59,9 +57,7 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
+            "@php artisan key:generate --ansi"
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"

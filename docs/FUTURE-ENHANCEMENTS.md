@@ -75,7 +75,7 @@ that matters.
 
 ## 13. Operational tooling
 
-- `scripts/check.sh` (required by the project guidance, not yet written).
+- Run `scripts/check.sh` end to end and keep it passing. The script exists but was not run for this milestone.
 - A pinned Pint run.
 - A regular fixture check that compares node and path counts against the table in
   [SVG-OPTIMIZATION.md](SVG-OPTIMIZATION.md) §3.

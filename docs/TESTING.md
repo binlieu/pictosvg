@@ -4,8 +4,8 @@
 
 ```bash
 php artisan test                       # all 54 tests (Unit + Feature)
-php artisan test --testsuite=Unit      # 18 unit tests
-php artisan test --testsuite=Feature   # 33 feature tests
+php artisan test --testsuite=Unit      # 19 unit tests
+php artisan test --testsuite=Feature   # 35 feature tests
 php artisan test --filter=test_logo_converts
 ```
 
@@ -28,10 +28,10 @@ JSON output format has **not been verified** in this milestone.
 | File | Tests | What it covers | Feature |
 |---|---|---|---|
 | `tests/Unit/PathGeometryTest.php` | 6 | Path-data parsing (relative commands, implicit line-to, separators), rejection of unsupported commands, Potrace transform baking, serialisation round trip, node count and signed area. | TRACE-001, EXPORT-002 |
-| `tests/Unit/SvgOptimizationServiceTest.php` | 6 | Node removal on straight runs, corner preservation, flat curves to lines, real curves kept, speck and tiny-hole removal with real holes kept, exact duplicate removal, zero tolerance is a no-op. | OPT-001 |
+| `tests/Unit/SvgOptimizationServiceTest.php` | 7 | Node removal on straight runs, corner preservation, flat curves to lines, real curves kept, speck and tiny-hole removal with real holes kept, exact duplicate removal, zero tolerance is a no-op. | OPT-001 |
 | `tests/Unit/SvgExportAndValidationTest.php` | 6 | Physical sizing in mm and in, aspect ratio, re-dimensioning changes only width and height, outline mode, no raster or transforms in export, validator rejects unsafe or malformed documents. | EXPORT-001, EXPORT-002 |
-| `tests/Feature/UploadTest.php` | 6 | PNG, JPEG and WebP accepted with correct dimensions and stored original, orientation-corrected dimensions, non-images rejected regardless of extension, missing file, pixel and byte limits, client filename never used as a path. | UPLOAD-001, SYS-001 |
-| `tests/Feature/ConversionTest.php` | 17 | Real conversions: logo defaults, holes, sharp corners, transparent PNG, light artwork on transparency, Noise Removal, optimisation node reduction and fill equivalence, smoothing monotonicity, Outline Cut closure, Line Art, photo-like image, rotated JPEG, advanced settings, blank image error, request validation and authorisation, optimise precondition, missing tracer. | TRACE-001, OPT-001, PRE-001, SYS-001 |
+| `tests/Feature/UploadTest.php` | 7 | PNG, JPEG and WebP accepted with correct dimensions and stored original, orientation-corrected dimensions, non-images rejected regardless of extension, missing file, pixel and byte limits, client filename never used as a path. | UPLOAD-001, SYS-001 |
+| `tests/Feature/ConversionTest.php` | 18 | Real conversions: logo defaults, holes, sharp corners, transparent PNG, light artwork on transparency, Noise Removal, optimisation node reduction and fill equivalence, smoothing monotonicity, Outline Cut closure, Line Art, photo-like image, rotated JPEG, advanced settings, blank image error, request validation and authorisation, optimise precondition, missing tracer. | TRACE-001, OPT-001, PRE-001, SYS-001 |
 | `tests/Feature/DownloadAndLifecycleTest.php` | 10 | Byte-identical download, re-dimensioning, token requirements, expiry and cleanup, version retention, token depends on app key, AI gating, home page content. | EXPORT-001, SYS-001, AI-001, VIEW-001 |
 
 Test-method names in the feature specs are the exact names in these files.
@@ -100,4 +100,6 @@ Notes:
 - ImageMagick 6 and other ImageMagick builds.
 - Real photographs.
 - Concurrency: two conversions on one id at the same time.
-- Coding style (`./vendor/bin/pint --test`). Pint has not been run for this milestone, and there is no `scripts/check.sh`.
+- Coding style (`./vendor/bin/pint --test`). Pint has not been run for this milestone.
+- `scripts/check.sh` as a whole. It exists, but it has not been run for this milestone. Its documentation
+  step expects a `README.md`, which does not exist, so the gate fails there until one is added or the check changes.

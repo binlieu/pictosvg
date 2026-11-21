@@ -96,7 +96,7 @@ converted once and reuses the cached prepared bitmap when the image-preparation 
 unchanged (it only re-fits and re-optimises the curves). Returns `409` with code
 `conversion_failed` if no conversion exists yet.
 
-## GET /api/svg/download/{id}?token=…&version=…&width=…&unit=…
+## GET /api/svg/download/{temporaryId}?token=…&version=…&width=…&unit=…
 
 Returns the SVG for `version` (default: latest) as `image/svg+xml` with
 `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff` and a restrictive
@@ -106,7 +106,7 @@ attributes are rewritten (the geometry and `viewBox` are never re-traced or defo
 ## GET /api/ai/status
 
 ```json
-{ "configured": false, "message": "AI Redraw is not configured on this server." }
+{ "configured": false, "message": "AI Redraw is not configured on this server. Standard conversion works without it." }
 ```
 
 ## POST /api/ai/redraw

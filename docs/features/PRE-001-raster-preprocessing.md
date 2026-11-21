@@ -46,8 +46,8 @@ Full details, formulas and the exact ImageMagick sequence are in [IMAGE-PROCESSI
 
 - Grayscale only. No colour.
 - No raster despeckle filter. Speck removal happens in Potrace and after tracing.
-- EXIF orientation depends on the `exif` extension. Without it the bitmap may be distorted for
-  rotated JPEGs. See [16-known-issues.md](../16-known-issues.md).
+- Orientation is read by ImageMagick, not PHP's `exif` extension. The earlier stretching bug for PNG
+  and WebP orientation is recorded as KI-01 (resolved) in [16-known-issues.md](../16-known-issues.md).
 - Photographs are approximate.
 - The bitmap cache key does not include the output width, so changing width is cheap. Changing
   Detail or Smoothing re-runs ImageMagick.

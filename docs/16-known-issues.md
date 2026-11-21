@@ -110,7 +110,7 @@ exports made before the change have a different stroke width. No test asserts th
 ### KI-17: Unused and missing items
 
 - `POST /api/svg/optimize` exists, but the web page always calls `/api/svg/convert`.
-- `scripts/check.sh` is required by the project guidance and is absent.
+- `scripts/check.sh` exists but was not run for this milestone. Its documentation step expects a `README.md`, which does not exist, so the gate fails there.
 - Laravel Pint has not been run for this milestone.
 - `AGENTS.md`, `AI/specs/` (empty) and `app/Console/Commands/` (empty) are absent or empty.
 - `database/migrations/` exists and is empty.
@@ -158,6 +158,6 @@ Re-conversion is debounced by about 450 ms; a long continuous drag from one IP c
 
 ### KI-R5: Very noisy large photos are refused rather than converted
 
-When the raw trace exceeds 6 MB the conversion stops with a "too complex" message
+When the raw trace exceeds 3 MB the conversion stops with a "too complex" message
 (`ConversionTest::test_overly_complex_traces_are_refused_before_they_exhaust_memory`). Raising
 Noise Removal or lowering Detail usually gets a result.

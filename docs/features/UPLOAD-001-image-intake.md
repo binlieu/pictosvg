@@ -18,7 +18,7 @@ Change and remove are client-side.
   file name and extension are ignored.
 - Minimum 8 × 8 px. Decoded pixels at most `max_pixels` (40 M). Otherwise `image_too_large` with the
   megapixel figures in the message.
-- EXIF orientation 5–8 swaps the reported dimensions when the `exif` extension is loaded.
+- Orientation metadata (EXIF in JPEG, PNG and WebP) is read with ImageMagick (`%[orientation]`). Orientations 5–8 swap the reported width and height. This does not depend on PHP's `exif` extension.
 - Display name: basename, characters outside letters, digits, space and `._()-` replaced by `_`,
   120 characters at most. Never used as a path. Fallback `image`.
 - Client side: accepts `image/jpeg`, `image/png`, `image/webp`, or a `.jpg`, `.jpeg`, `.png` or
@@ -41,6 +41,7 @@ Change and remove are client-side.
 - `tests/Feature/UploadTest.php`:
   - `test_accepts_png_jpeg_and_webp_and_reports_dimensions`
   - `test_reports_orientation_corrected_dimensions`
+  - `test_png_orientation_metadata_is_honoured_like_jpeg`
   - `test_rejects_non_images_regardless_of_extension`
   - `test_rejects_missing_file`
   - `test_enforces_decoded_pixel_limit_and_byte_limit`

@@ -36,7 +36,7 @@ Known issues of note: see [16-known-issues.md](16-known-issues.md), especially K
 ## 2026-11-21 — Independent review fixes (SYS-001, PRE-001, EXPORT-001)
 
 - Orientation metadata is honoured for PNG and WebP as well as JPEG (was: JPEG only; rotated PNGs were stretched).
-- Raw tracer output over 6 MB is refused before parsing; the raw node count is measured directly instead of re-exporting and re-validating the raw trace.
+- Raw tracer output over 3 MB is refused before parsing (measured: a 3000x2000 heavy-noise JPEG is refused at 22 MB peak PHP memory under a 128 MB limit; with a 6 MB cap the same image peaked at 115 MB); the raw node count is measured directly instead of re-exporting and re-validating the raw trace.
 - Prepared-bitmap cache files newer than 120 s are no longer deleted by a concurrent conversion.
 - Width must be at least 0.01 on convert and download (tiny widths previously produced a 500).
 - Local reverse proxy is trusted so rate limits use the real client IP; conversion limit raised to 180/min.

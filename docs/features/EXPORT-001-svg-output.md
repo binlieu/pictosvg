@@ -21,7 +21,7 @@ Full format rules are in [SVG-OPTIMIZATION.md](../SVG-OPTIMIZATION.md) ยง4 and ย
 - Validation before storage and again before download. The allow-list covers elements, attributes and
   values.
 - Download: `GET /api/svg/download/{id}?token=&version=&width=&unit=`. Adds `Content-Disposition:
-  attachment`, `nosniff`, a sandboxing CSP and `no-store`. The file name is `<stem>-pictosvg.svg`,
+  attachment`, `nosniff`, a sandboxing CSP, `no-store` and `Referrer-Policy: no-referrer`. The file name is `<stem>-pictosvg.svg`,
   with the stem sanitised to `[A-Za-z0-9_-]`.
 - Re-sizing with `width` and `unit` rewrites only the root `width` and `height` attributes.
 

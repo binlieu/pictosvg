@@ -40,8 +40,9 @@ id and a token.
    (20 MB). Error code `image_too_large`.
 2. Inspect the content (`ImagePreprocessingService::inspect`): MIME from `finfo` (must be JPEG,
    PNG or WebP); `getimagesize` type must agree; width and height at least 8 px; decoded pixels at
-   most `max_pixels` (40 M). EXIF orientation 5–8 swaps the reported width and height when the
-   `exif` extension is loaded.
+   most `max_pixels` (40 M). Orientation metadata (EXIF in JPEG, PNG and WebP) is read with
+   ImageMagick (`%[orientation]`); orientations 5–8 swap the reported width and height. PHP's `exif`
+   extension is not needed.
 3. Run the cleanup sweep with 1-in-20 probability (`Lottery`).
 4. Create `storage/app/private/pictosvg/<id>/` with mode 0700. Move the upload to `original.bin`
    (mode 0600). Write `meta.json` with the inspection facts and a sanitised display name.
@@ -56,7 +57,8 @@ id and a token.
 4. `ConversionPipeline::convert`:
    a. Read or create `analysis.json` (transparency decision).
    b. Create `bitmap-<key>.pbm` with ImageMagick unless a matching bitmap exists.
-   c. Run Potrace raw (`--longcurve`) and count nodes (`nodes_before`).
+   c. Run Potrace raw (`--longcurve`). Raw output over 3 MB is refused. Count nodes (`nodes_before`)
+      directly from the raw trace.
    d. If Smoothing is on, run Potrace curve-fitted and optimise.
    e. Export and validate the final SVG. Reject results over 15 MB.
    f. Write `result-<version>.svg` atomically, update `latest.json` and prune old versions.
@@ -68,7 +70,7 @@ conversion has been stored yet. The web UI always calls `/api/svg/convert`.
 ### 2.3 Download (`GET /api/svg/download/{temporaryId}`)
 
 1. Authorise id and token (same as above).
-2. Validate the optional `version` (12 hex), `width` (numeric, greater than 0, at most 100000) and
+2. Validate the optional `version` (12 hex), `width` (numeric, at least 0.01, at most 100000) and
    `unit` (`mm` or `in`, required with `width`).
 3. Read `result-<version>.svg` (default `latest.json`). Missing file returns `404 expired`.
 4. If `width` is given, rewrite only the root `width` and `height`.
@@ -76,7 +78,7 @@ conversion has been stored yet. The web UI always calls `/api/svg/convert`.
 6. Return the file with `Content-Type: image/svg+xml; charset=utf-8`,
    `Content-Disposition: attachment; filename="<name>-pictosvg.svg"`, `X-Content-Type-Options: nosniff`,
    `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` and
-   `Cache-Control: private, no-store`.
+   `Cache-Control: private, no-store` and `Referrer-Policy: no-referrer`.
 
 ### 2.4 AI status and redraw
 
@@ -107,7 +109,7 @@ storage/app/private/pictosvg/                 (not web-served; config pictosvg.s
     ├── meta.json        upload facts; its mtime sets the expiry clock
     ├── original.bin     the upload, mode 0600, never modified
     ├── analysis.json    transparency decision (created on first conversion)
-    ├── bitmap-<key>.pbm prepared 1-bit bitmap; one at a time
+    ├── bitmap-<key>.pbm prepared 1-bit bitmap; bitmaps untouched for 120 s are removed when a new one is written
     ├── result-<12 hex>.svg  one per conversion version; up to 5 kept
     ├── latest.json      {"version": "<12 hex>"}
     └── tmp-*            transient; removed after use or after 5 minutes
@@ -159,7 +161,7 @@ process timeout.
 | Oversized input | 20 MB byte limit and 40 M decoded-pixel limit. |
 | Path traversal | Ids are format-checked. File names are never used. Versions must be 12 hex. |
 | Command injection | Argument arrays only. No shell. |
-| Resource exhaustion | Process timeout (default 40 s). ImageMagick memory, disk and thread limits. Working side capped at 3600 px. Result capped at 15 MB. Rate limits per IP. |
+| Resource exhaustion | Process timeout (default 40 s). ImageMagick memory, disk and thread limits. Working side capped at 3600 px. Raw trace capped at 3 MB; result capped at 15 MB. Rate limits per IP. |
 | Unsafe SVG | Output is generated from numbers only. The served bytes pass an allow-list validator. Download carries `nosniff`, a sandboxing CSP and `no-store`. |
 | XML attacks | `LIBXML_NONET`; DOCTYPE and ENTITY text rejected in the validator. |
 | Information leaks | Errors are generic and contain no paths or command lines. Tests check this for a missing tracer. |
@@ -174,10 +176,12 @@ Laravel `RateLimiter`, keyed by client IP, using the default cache store (`file`
 | Bucket | Limit | Routes |
 |---|---|---|
 | `pictosvg-upload` | 20 per minute | `POST /api/images/upload`, `POST /api/ai/redraw` |
-| `pictosvg-convert` | 90 per minute | `POST /api/svg/convert`, `POST /api/svg/optimize`, `GET /api/svg/download/{temporaryId}` |
+| `pictosvg-convert` | 180 per minute | `POST /api/svg/convert`, `POST /api/svg/optimize`, `GET /api/svg/download/{temporaryId}` |
 | none | — | `GET /api/ai/status`, `GET /` |
 
-Limits are per IP. They are the only concurrency bound. The test suite disables throttling.
+Limits are per IP. They are the only concurrency bound. Client IPs come from the request. Laravel trusts
+only `127.0.0.1` and `::1` as proxies (`bootstrap/app.php`), which matches an Nginx instance on the same
+host. The test suite disables throttling.
 
 ## 9. Queues, sessions and database
 

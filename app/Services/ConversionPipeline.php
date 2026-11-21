@@ -101,18 +101,21 @@ class ConversionPipeline
 
         // --- 3. Optimise (separate from tracing; skipped when smooth curves is off) -----
         if ($s->smoothCurves) {
+            unset($raw); // free the raw trace before the second one is loaded
             $shapes = $this->tracer->trace($bitmap, $work(), $base + ['opttolerance' => $s->optTolerance()]);
             $shapes = $this->optimizer->optimize($shapes, [
                 'tolerance' => $s->simplifyTolerance($long),
                 'min_area' => (float) $speck,
             ])['shapes'];
             if ($shapes === []) {
-                $shapes = $raw;
+                throw PicToSvgException::conversionFailed(
+                    'Nothing was left after clean-up. Try lowering Noise Removal in the settings.'
+                );
             }
         } else {
             $shapes = $raw;
+            unset($raw);
         }
-        unset($raw);
 
         // --- 4. Export + validate the exact bytes that will be served -------------------
         $svg = $this->export->build($shapes, $exportOptions);

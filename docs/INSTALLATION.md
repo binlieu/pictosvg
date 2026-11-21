@@ -58,7 +58,7 @@ PICTOSVG_POTRACE_BIN=/opt/homebrew/bin/potrace
 sudo apt update
 sudo apt install php-fpm php-cli php-xml php-mbstring php-gd php-curl unzip imagemagick potrace
 sudo apt install composer     # or install Composer from getcomposer.org
-php -m | grep -E 'exif|fileinfo|dom|mbstring'   # confirm exif is present
+php -m | grep -E 'fileinfo|dom|mbstring'   # confirm the required extensions
 ```
 
 `php-gd` and `php-curl` are listed because the packages are commonly installed. The application
